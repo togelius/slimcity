@@ -1,0 +1,32 @@
+# Build artifacts
+engine/build/
+**/__pycache__/
+*.pyc
+*.pyo
+*.so
+
+# Training artifacts
+*.npz
+
+# Generated visualizations (use record.py to regenerate)
+*.gif
+*.png
+*.ppm
+
+# Reference project — vendored Micropolis source was copied out of
+# this into engine/. The original is kept locally for reference only;
+# not part of slimcity.
+gym-city/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local Claude Code settings (per-machine permission allowlist)
+.claude/settings.local.json
