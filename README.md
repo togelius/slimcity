@@ -64,6 +64,9 @@ python3 qd_train.py --gens 5 --emitters 1 --batch 8
 # Run a real QD experiment
 python3 qd_train.py --gens 200 --emitters 5 --batch 20 --save archive.npz
 
+# Same, parallelized across 8 worker processes (~4x faster on the M4)
+python3 qd_train.py --gens 200 --emitters 5 --batch 20 --workers 8
+
 # Look at the archive
 python3 plot_archive.py archive.npz
 

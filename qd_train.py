@@ -15,6 +15,7 @@ Run a real (longer) experiment:
 from __future__ import annotations
 
 import argparse
+import multiprocessing as mp
 import os
 import time
 
@@ -26,6 +27,43 @@ from ribs.schedulers import Scheduler
 from evaluate import evaluate
 from policy import ConvPolicy
 from slimcity import MicropolisEnv
+
+
+# ---------------------------------------------------------------------------
+# Multiprocessing workers
+#
+# Why processes instead of threads: the Micropolis engine is SWIG-wrapped C++
+# and doesn't release the Python GIL during simTick / getTile loops, so real
+# threads serialize anyway. Each worker is its own Python process with its
+# own engine instance — fully independent, embarrassingly parallel.
+#
+# Workers persist for the lifetime of the Pool. Per-task overhead is just
+# pickling theta (a 740-float32 array, ~3 KB) over a pipe. Initialization
+# (spawn + import + engine construction) happens once per worker.
+# ---------------------------------------------------------------------------
+
+_WORKER_STATE: dict = {}
+
+
+def _worker_init(episode_seed: int, n_actions: int,
+                 ticks_per_action: int, warmup: int) -> None:
+    """Run once per worker process. Builds the env and stashes eval kwargs."""
+    # Import here so the engine .so is loaded in the worker, not the parent.
+    from slimcity import MicropolisEnv as _Env
+    _WORKER_STATE["env"] = _Env(seed=episode_seed)
+    _WORKER_STATE["kwargs"] = dict(
+        seed=episode_seed,
+        n_actions=n_actions,
+        ticks_per_action=ticks_per_action,
+        warmup_ticks=warmup,
+    )
+
+
+def _worker_eval(theta: np.ndarray) -> tuple[float, float, float]:
+    """Evaluate one solution in this worker's env. Returns (fitness, m0, m1)."""
+    from evaluate import evaluate as _evaluate
+    r = _evaluate(theta, env=_WORKER_STATE["env"], **_WORKER_STATE["kwargs"])
+    return float(r.fitness), float(r.measures[0]), float(r.measures[1])
 
 
 def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: float,
@@ -63,10 +101,26 @@ def main():
                     help='ES algorithm: "sep_cma_es" (diagonal, scalable) or "cma_es" (full cov)')
     ap.add_argument("--n-actions", type=int, default=50)
     ap.add_argument("--ticks-per-action", type=int, default=100)
+    ap.add_argument("--warmup", type=int, default=0,
+                    help="sim ticks to run before the policy acts. 0 makes sense "
+                         "for empty-map starts; raise to ~500 if loading a preset.")
     ap.add_argument("--episode-seed", type=int, default=42,
                     help="fixed seed for env reset across all evals (deterministic fitness)")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="number of worker processes for parallel rollouts. "
+                         "1 = sequential (no Pool). Recommended 4-8 on the M4 "
+                         "(10 cores: 4 perf + 6 efficiency).")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
+
+    if args.workers > 1:
+        # Keep numpy/BLAS single-threaded inside workers so they don't all fight
+        # over the same cores. Must be set before numpy is imported in workers.
+        # spawn() forwards the parent env, so setting here propagates.
+        for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                    "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+                    "NUMEXPR_NUM_THREADS"):
+            os.environ.setdefault(var, "1")
 
     n_params = ConvPolicy.param_count()
     print(f"policy parameters: {n_params}")
@@ -79,8 +133,21 @@ def main():
         es=args.es,
     )
 
-    # Reuse one env across evaluations - reset() is cheap.
-    env = MicropolisEnv(seed=args.episode_seed)
+    # Set up either a sequential env (workers=1) or a process Pool (workers>1).
+    pool = None
+    env = None
+    if args.workers > 1:
+        ctx = mp.get_context("spawn")  # spawn is the safe choice on macOS
+        pool = ctx.Pool(
+            processes=args.workers,
+            initializer=_worker_init,
+            initargs=(args.episode_seed, args.n_actions,
+                      args.ticks_per_action, args.warmup),
+        )
+        print(f"running with {args.workers} worker processes")
+    else:
+        env = MicropolisEnv(seed=args.episode_seed)
+        print("running sequentially (--workers 1)")
 
     print(f"running {args.gens} generations, "
           f"{args.emitters} emitters x {args.batch} solutions = "
@@ -93,16 +160,30 @@ def main():
 
         objectives = np.empty(len(solutions), dtype=np.float32)
         measures = np.empty((len(solutions), 2), dtype=np.float32)
-        for i, sol in enumerate(solutions):
-            r = evaluate(
-                sol,
-                seed=args.episode_seed,
-                n_actions=args.n_actions,
-                ticks_per_action=args.ticks_per_action,
-                env=env,
+
+        if pool is not None:
+            # pool.map preserves order: results[i] is for solutions[i].
+            # Cast to float32 so pickled payloads are predictable and small.
+            results = pool.map(
+                _worker_eval,
+                [s.astype(np.float32) for s in solutions],
             )
-            objectives[i] = r.fitness
-            measures[i] = r.measures
+            for i, (f, m0, m1) in enumerate(results):
+                objectives[i] = f
+                measures[i, 0] = m0
+                measures[i, 1] = m1
+        else:
+            for i, sol in enumerate(solutions):
+                r = evaluate(
+                    sol,
+                    seed=args.episode_seed,
+                    n_actions=args.n_actions,
+                    ticks_per_action=args.ticks_per_action,
+                    warmup_ticks=args.warmup,
+                    env=env,
+                )
+                objectives[i] = r.fitness
+                measures[i] = r.measures
 
         scheduler.tell(objectives, measures)
         dt = time.time() - t0
@@ -126,6 +207,10 @@ def main():
         measures=data["measures"],
     )
     print(f"saved archive to {args.save} ({len(data['objective'])} elites)")
+
+    if pool is not None:
+        pool.close()
+        pool.join()
 
 
 if __name__ == "__main__":
