@@ -75,6 +75,26 @@ def _dense_bonus(tile_map: np.ndarray, powered_count: int) -> float:
     return 0.01 * n_built + 1.0 * powered_count
 
 
+def _variety_bonus(tile_map: np.ndarray) -> float:
+    """Reward placing a variety of *categories* of tile.
+
+    Six binary "have we ever placed one?" flags worth a few points each.
+    Designed to break out of the initial degenerate state where a random
+    policy spams a single tile type. Cheap, dense, monotone.
+
+    Categories: residential / commercial / industrial / road / wire / plant.
+    """
+    is_res   = ((tile_map >= RES_RANGE[0])  & (tile_map <= RES_RANGE[1])).any()
+    is_com   = ((tile_map >= COM_RANGE[0])  & (tile_map <= COM_RANGE[1])).any()
+    is_ind   = ((tile_map >= IND_RANGE[0])  & (tile_map <= IND_RANGE[1])).any()
+    # Road range covers roads, rails, wires; split coarsely:
+    is_road  = ((tile_map >= 64)  & (tile_map <= 95)).any()    # road segments
+    is_wire  = ((tile_map >= 208) & (tile_map <= 222)).any()   # wire segments
+    is_plant = np.isin(tile_map, list(PLANT_TILES)).any()
+    n_kinds = int(is_res) + int(is_com) + int(is_ind) + int(is_road) + int(is_wire) + int(is_plant)
+    return 2.0 * n_kinds   # up to +12 with all six categories present
+
+
 def evaluate(
     theta: np.ndarray,
     seed: int = 0,
@@ -120,6 +140,14 @@ def evaluate(
     pop_delta = float(s.city_pop - baseline_pop)
     if fitness_mode == "dense":
         fitness = pop_delta + _dense_bonus(final_map, env.engine.poweredZoneCount)
+    elif fitness_mode == "varied":
+        # dense + variety bonus — helps non-tape policies escape the
+        # zero-init degenerate state where every action lands on the same tile.
+        fitness = (
+            pop_delta
+            + _dense_bonus(final_map, env.engine.poweredZoneCount)
+            + _variety_bonus(final_map)
+        )
     else:
         fitness = pop_delta
     measures = tile_descriptors(final_map)
