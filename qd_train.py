@@ -127,14 +127,19 @@ def main():
                     help="MLP hidden width (only for --policy mlp)")
     ap.add_argument("--policy-channels", type=str, default="16,32",
                     help="DeepConv channels (comma sep, only for --policy deepconv)")
-    ap.add_argument("--fitness", type=str, default="pop", choices=["pop", "dense"],
-                    help="pop = cityPop delta; dense = + built-tile and powered-zone bonus")
+    ap.add_argument("--fitness", type=str, default="pop",
+                    choices=["pop", "dense", "varied"],
+                    help="pop = cityPop delta; "
+                         "dense = + built-tile and powered-zone bonus; "
+                         "varied = dense + bonus for placing diverse tile categories")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
 
     # Build policy kwargs based on the chosen policy
     policy_kwargs: dict = {}
     if args.policy == "tape":
+        policy_kwargs = {"n_actions": args.n_actions}
+    elif args.policy == "ctxtape":
         policy_kwargs = {"n_actions": args.n_actions}
     elif args.policy == "mlp":
         policy_kwargs = {"hidden": args.policy_hidden}

@@ -164,6 +164,96 @@ class ActionTape:
 
 
 # ---------------------------------------------------------------------------
+# ContextualTape: ActionTape + a small shared linear "delta" off the current
+# map summary. Cheapest possible closed-loop variant of the tape.
+#
+# At step i:
+#   tanh-action[i] = tanh( base[i] + W @ features(map) )
+# where:
+#   base is (n_actions, 3) like ActionTape
+#   features(map) is a fixed N_FEAT-dim normalized summary of the current map
+#   W is a SHARED (3, N_FEAT) matrix used for every step
+#
+# Param count: n_actions*3 + 3*N_FEAT  (e.g. 100*3 + 3*10 = 330).
+# Only 30 more params than ActionTape, but the policy can react to what it's
+# already built. If the open-loop tape wins, the search just learns W ~ 0.
+# ---------------------------------------------------------------------------
+
+_CTX_N_FEAT = 10  # see _ctx_features() below
+
+
+def _ctx_features(tile_map: np.ndarray, step: int, n_actions: int) -> np.ndarray:
+    """Tiny normalized summary of the current map state.
+
+    Returns a length-N_FEAT vector in roughly [0, 1] each. The features are
+    deliberately coarse so the search direction in W-space is well-conditioned.
+    """
+    H, W = tile_map.shape
+    total = float(H * W)
+    is_res = (tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])
+    is_com = (tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])
+    is_ind = (tile_map >= IND_RANGE[0]) & (tile_map <= IND_RANGE[1])
+    is_road = (tile_map >= ROAD_RANGE[0]) & (tile_map <= ROAD_RANGE[1])
+    is_plant = np.isin(tile_map, list(PLANT_TILES))
+    is_empty = tile_map == 0
+    built_mask = is_res | is_com | is_ind | is_road | is_plant
+    feats = np.array([
+        is_res.sum() / total,
+        is_com.sum() / total,
+        is_ind.sum() / total,
+        is_road.sum() / total,
+        is_plant.sum() / total,
+        is_empty.sum() / total,
+        built_mask.sum() / total,
+        # Centroid of built tiles (or 0.5 if none) — gives a sense of where stuff is.
+        (np.argwhere(built_mask)[:, 1].mean() / W) if built_mask.any() else 0.5,
+        (np.argwhere(built_mask)[:, 0].mean() / H) if built_mask.any() else 0.5,
+        step / max(1, n_actions),  # normalized progress through the rollout
+    ], dtype=np.float32)
+    return feats
+
+
+class ContextualTape:
+    SIGMA0 = 1.0
+    RECOMMENDED_ES = "sep_cma_es"  # 330 params is on the edge of full-CMA's comfort zone
+
+    def __init__(self, n_actions: int = 100, n_features: int = _CTX_N_FEAT):
+        self.n_actions = n_actions
+        self.n_features = n_features
+        self.base = np.zeros((n_actions, 3), dtype=np.float32)
+        self.W = np.zeros((3, n_features), dtype=np.float32)
+        self.step_idx = 0
+
+    @staticmethod
+    def param_count(n_actions: int = 100, n_features: int = _CTX_N_FEAT) -> int:
+        return n_actions * 3 + 3 * n_features
+
+    def set_params(self, theta: np.ndarray) -> None:
+        n_base = self.n_actions * 3
+        n_w = 3 * self.n_features
+        assert theta.shape == (n_base + n_w,), theta.shape
+        self.base = theta[:n_base].reshape(self.n_actions, 3).astype(np.float32)
+        self.W = theta[n_base:n_base + n_w].reshape(3, self.n_features).astype(np.float32)
+
+    def get_params(self) -> np.ndarray:
+        return np.concatenate([self.base.ravel(), self.W.ravel()]).astype(np.float32)
+
+    def reset(self) -> None:
+        self.step_idx = 0
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        i = self.step_idx % self.n_actions
+        feats = _ctx_features(tile_map, self.step_idx, self.n_actions)
+        delta = self.W @ feats                       # shape (3,)
+        t, x, y = self.base[i] + delta
+        self.step_idx += 1
+        tool = min(int((np.tanh(t) + 1.0) * 0.5 * N_TOOLS), N_TOOLS - 1)
+        wx   = min(int((np.tanh(x) + 1.0) * 0.5 * WORLD_W), WORLD_W - 1)
+        wy   = min(int((np.tanh(y) + 1.0) * 0.5 * WORLD_H), WORLD_H - 1)
+        return tool, wx, wy
+
+
+# ---------------------------------------------------------------------------
 # MLPPolicy: flatten obs -> ReLU -> factored (tool, position) heads.
 #
 # Closed-loop. Output is factored: tool comes from one softmax over N_TOOLS,
@@ -314,6 +404,7 @@ class DeepConvPolicy:
 POLICY_REGISTRY = {
     "conv":      ConvPolicy,
     "tape":      ActionTape,
+    "ctxtape":   ContextualTape,
     "mlp":       MLPPolicy,
     "deepconv":  DeepConvPolicy,
 }
