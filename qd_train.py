@@ -25,7 +25,7 @@ from ribs.emitters import EvolutionStrategyEmitter
 from ribs.schedulers import Scheduler
 
 from evaluate import evaluate
-from policy import ConvPolicy
+from policy import POLICY_REGISTRY, ConvPolicy, make_policy, policy_param_count
 from slimcity import MicropolisEnv
 
 
@@ -46,23 +46,33 @@ _WORKER_STATE: dict = {}
 
 
 def _worker_init(episode_seed: int, n_actions: int,
-                 ticks_per_action: int, warmup: int) -> None:
-    """Run once per worker process. Builds the env and stashes eval kwargs."""
+                 ticks_per_action: int, warmup: int,
+                 policy_name: str, policy_kwargs: dict,
+                 fitness_mode: str) -> None:
+    """Run once per worker process. Stashes eval kwargs. The env is NOT
+    cached here — see _worker_eval. We do warm the engine .so import path
+    so it's loaded once."""
     # Import here so the engine .so is loaded in the worker, not the parent.
-    from slimcity import MicropolisEnv as _Env
-    _WORKER_STATE["env"] = _Env(seed=episode_seed)
+    import slimcity  # noqa: F401  -- import for side effect (load .so)
     _WORKER_STATE["kwargs"] = dict(
         seed=episode_seed,
         n_actions=n_actions,
         ticks_per_action=ticks_per_action,
         warmup_ticks=warmup,
+        policy_name=policy_name,
+        policy_kwargs=policy_kwargs,
+        fitness_mode=fitness_mode,
     )
 
 
 def _worker_eval(theta: np.ndarray) -> tuple[float, float, float]:
-    """Evaluate one solution in this worker's env. Returns (fitness, m0, m1)."""
+    """Evaluate one solution in a FRESH env. Determinism requires that the
+    engine starts from a known C++ object state — env.reset() doesn't fully
+    reset aux maps and RNG depth. Constructing a new MicropolisEnv is ~0.5ms,
+    negligible vs the rollout cost."""
     from evaluate import evaluate as _evaluate
-    r = _evaluate(theta, env=_WORKER_STATE["env"], **_WORKER_STATE["kwargs"])
+    # env=None tells evaluate() to construct a fresh one.
+    r = _evaluate(theta, env=None, **_WORKER_STATE["kwargs"])
     return float(r.fitness), float(r.measures[0]), float(r.measures[1])
 
 
@@ -110,8 +120,26 @@ def main():
                     help="number of worker processes for parallel rollouts. "
                          "1 = sequential (no Pool). Recommended 4-8 on the M4 "
                          "(10 cores: 4 perf + 6 efficiency).")
+    ap.add_argument("--policy", type=str, default="conv",
+                    choices=sorted(POLICY_REGISTRY.keys()),
+                    help="policy representation: conv | tape | mlp | deepconv")
+    ap.add_argument("--policy-hidden", type=int, default=32,
+                    help="MLP hidden width (only for --policy mlp)")
+    ap.add_argument("--policy-channels", type=str, default="16,32",
+                    help="DeepConv channels (comma sep, only for --policy deepconv)")
+    ap.add_argument("--fitness", type=str, default="pop", choices=["pop", "dense"],
+                    help="pop = cityPop delta; dense = + built-tile and powered-zone bonus")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
+
+    # Build policy kwargs based on the chosen policy
+    policy_kwargs: dict = {}
+    if args.policy == "tape":
+        policy_kwargs = {"n_actions": args.n_actions}
+    elif args.policy == "mlp":
+        policy_kwargs = {"hidden": args.policy_hidden}
+    elif args.policy == "deepconv":
+        policy_kwargs = {"channels": tuple(int(c) for c in args.policy_channels.split(","))}
 
     if args.workers > 1:
         # Keep numpy/BLAS single-threaded inside workers so they don't all fight
@@ -122,8 +150,16 @@ def main():
                     "NUMEXPR_NUM_THREADS"):
             os.environ.setdefault(var, "1")
 
-    n_params = ConvPolicy.param_count()
-    print(f"policy parameters: {n_params}")
+    n_params = policy_param_count(args.policy, **policy_kwargs)
+    # Use policy-recommended sigma0 / ES if user didn't override (parser still
+    # ran with defaults, so we only swap when defaults are present).
+    proto = make_policy(args.policy, **policy_kwargs)
+    if args.sigma0 == 0.5 and hasattr(proto, "SIGMA0"):
+        args.sigma0 = proto.SIGMA0
+    if args.es == "sep_cma_es" and hasattr(proto, "RECOMMENDED_ES"):
+        args.es = proto.RECOMMENDED_ES
+    print(f"policy = {args.policy}  params = {n_params}  sigma0 = {args.sigma0}  es = {args.es}")
+    print(f"fitness = {args.fitness}")
 
     scheduler, archive = build_scheduler(
         n_params=n_params,
@@ -133,20 +169,21 @@ def main():
         es=args.es,
     )
 
-    # Set up either a sequential env (workers=1) or a process Pool (workers>1).
+    # Set up either a sequential mode (workers=1) or a process Pool (workers>1).
+    # Note: even in sequential mode we construct a fresh env per eval to keep
+    # results deterministic — see evaluate.evaluate() for the rationale.
     pool = None
-    env = None
     if args.workers > 1:
         ctx = mp.get_context("spawn")  # spawn is the safe choice on macOS
         pool = ctx.Pool(
             processes=args.workers,
             initializer=_worker_init,
             initargs=(args.episode_seed, args.n_actions,
-                      args.ticks_per_action, args.warmup),
+                      args.ticks_per_action, args.warmup,
+                      args.policy, policy_kwargs, args.fitness),
         )
         print(f"running with {args.workers} worker processes")
     else:
-        env = MicropolisEnv(seed=args.episode_seed)
         print("running sequentially (--workers 1)")
 
     print(f"running {args.gens} generations, "
@@ -174,13 +211,18 @@ def main():
                 measures[i, 1] = m1
         else:
             for i, sol in enumerate(solutions):
+                # env=None → evaluate() builds a fresh MicropolisEnv each
+                # call. Required for deterministic fitness — see notes.
                 r = evaluate(
                     sol,
                     seed=args.episode_seed,
                     n_actions=args.n_actions,
                     ticks_per_action=args.ticks_per_action,
                     warmup_ticks=args.warmup,
-                    env=env,
+                    env=None,
+                    policy_name=args.policy,
+                    policy_kwargs=policy_kwargs,
+                    fitness_mode=args.fitness,
                 )
                 objectives[i] = r.fitness
                 measures[i] = r.measures

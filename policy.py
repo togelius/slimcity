@@ -98,6 +98,13 @@ class ConvPolicy:
     def get_params(self) -> np.ndarray:
         return np.concatenate([self.w.ravel(), self.b.ravel()]).astype(np.float32)
 
+    def reset(self) -> None:
+        """No-op for closed-loop policies (only ActionTape uses this)."""
+
+    # Recommended hyperparams for CMA-ME with this policy
+    SIGMA0 = 0.5
+    RECOMMENDED_ES = "sep_cma_es"
+
     def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
         """Return (tool, world_x, world_y) by greedy argmax over conv logits."""
         obs = encode_obs(tile_map)               # (N_CHAN, OBS_H, OBS_W)
@@ -111,3 +118,220 @@ class ConvPolicy:
         wx = x_obs * OBS_STRIDE + OBS_STRIDE // 2
         wy = y_obs * OBS_STRIDE + OBS_STRIDE // 2
         return tool, wx, wy
+
+
+# ---------------------------------------------------------------------------
+# ActionTape: open-loop fixed sequence of (tool, x, y) triples.
+#
+# The simplest possible policy. CMA-ME evolves a flat vector of 3 floats per
+# step, mapped through tanh -> discrete index. Open-loop: ignores tile_map.
+# Param count is n_actions * 3 (e.g. 100 actions = 300 params).
+# ---------------------------------------------------------------------------
+
+class ActionTape:
+    SIGMA0 = 1.0                # bigger so initial population spreads action space
+    RECOMMENDED_ES = "cma_es"   # full CMA fine at this param count
+
+    def __init__(self, n_actions: int = 100):
+        self.n_actions = n_actions
+        self.theta = np.zeros((n_actions, 3), dtype=np.float32)
+        self.step_idx = 0
+
+    @staticmethod
+    def param_count(n_actions: int = 100) -> int:
+        return n_actions * 3
+
+    def set_params(self, theta: np.ndarray) -> None:
+        assert theta.shape == (self.n_actions * 3,), theta.shape
+        self.theta = theta.reshape(self.n_actions, 3).astype(np.float32)
+
+    def get_params(self) -> np.ndarray:
+        return self.theta.ravel().astype(np.float32)
+
+    def reset(self) -> None:
+        self.step_idx = 0
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        # Cycle if we run out of actions (shouldn't happen if n_actions matches rollout length).
+        i = self.step_idx % self.n_actions
+        self.step_idx += 1
+        t, x, y = self.theta[i]
+        # tanh -> [0, 1] -> discrete index. theta=0 maps to the middle of the range.
+        tool = min(int((np.tanh(t) + 1.0) * 0.5 * N_TOOLS), N_TOOLS - 1)
+        wx   = min(int((np.tanh(x) + 1.0) * 0.5 * WORLD_W), WORLD_W - 1)
+        wy   = min(int((np.tanh(y) + 1.0) * 0.5 * WORLD_H), WORLD_H - 1)
+        return tool, wx, wy
+
+
+# ---------------------------------------------------------------------------
+# MLPPolicy: flatten obs -> ReLU -> factored (tool, position) heads.
+#
+# Closed-loop. Output is factored: tool comes from one softmax over N_TOOLS,
+# position comes from one softmax over OBS_H*OBS_W cells (snapped to block
+# centers like ConvPolicy). Independent argmaxes.
+# ---------------------------------------------------------------------------
+
+class MLPPolicy:
+    SIGMA0 = 0.1
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, hidden: int = 32):
+        self.hidden = hidden
+        self._in_dim = N_CHAN * OBS_H * OBS_W
+        self._out_pos_dim = OBS_H * OBS_W
+        # Layer 1: in -> hidden
+        # Layer 2a: hidden -> N_TOOLS (tool head)
+        # Layer 2b: hidden -> OBS_H*OBS_W (pos head)
+        self.W1 = np.zeros((hidden, self._in_dim), dtype=np.float32)
+        self.b1 = np.zeros(hidden, dtype=np.float32)
+        self.W_tool = np.zeros((N_TOOLS, hidden), dtype=np.float32)
+        self.b_tool = np.zeros(N_TOOLS, dtype=np.float32)
+        self.W_pos = np.zeros((self._out_pos_dim, hidden), dtype=np.float32)
+        self.b_pos = np.zeros(self._out_pos_dim, dtype=np.float32)
+
+    @classmethod
+    def param_count(cls, hidden: int = 32) -> int:
+        in_dim = N_CHAN * OBS_H * OBS_W
+        out_pos = OBS_H * OBS_W
+        return (
+            hidden * in_dim + hidden +
+            N_TOOLS * hidden + N_TOOLS +
+            out_pos * hidden + out_pos
+        )
+
+    def set_params(self, theta: np.ndarray) -> None:
+        h, in_dim, out_pos = self.hidden, self._in_dim, self._out_pos_dim
+        off = 0
+        self.W1 = theta[off:off + h * in_dim].reshape(h, in_dim).astype(np.float32); off += h * in_dim
+        self.b1 = theta[off:off + h].astype(np.float32); off += h
+        self.W_tool = theta[off:off + N_TOOLS * h].reshape(N_TOOLS, h).astype(np.float32); off += N_TOOLS * h
+        self.b_tool = theta[off:off + N_TOOLS].astype(np.float32); off += N_TOOLS
+        self.W_pos = theta[off:off + out_pos * h].reshape(out_pos, h).astype(np.float32); off += out_pos * h
+        self.b_pos = theta[off:off + out_pos].astype(np.float32); off += out_pos
+
+    def get_params(self) -> np.ndarray:
+        return np.concatenate([
+            self.W1.ravel(), self.b1,
+            self.W_tool.ravel(), self.b_tool,
+            self.W_pos.ravel(), self.b_pos,
+        ]).astype(np.float32)
+
+    def reset(self) -> None:
+        pass
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        obs = encode_obs(tile_map).ravel()
+        h = np.maximum(0.0, self.W1 @ obs + self.b1)   # ReLU
+        tool_logits = self.W_tool @ h + self.b_tool
+        pos_logits  = self.W_pos  @ h + self.b_pos
+        tool = int(np.argmax(tool_logits))
+        pos_idx = int(np.argmax(pos_logits))
+        y_obs = pos_idx // OBS_W
+        x_obs = pos_idx %  OBS_W
+        wx = x_obs * OBS_STRIDE + OBS_STRIDE // 2
+        wy = y_obs * OBS_STRIDE + OBS_STRIDE // 2
+        return tool, wx, wy
+
+
+# ---------------------------------------------------------------------------
+# DeepConvPolicy: stack of 3x3 conv layers with ReLU, ending in N_TOOLS chans.
+# Same output decoding as ConvPolicy (joint argmax over 20x20x24 logits).
+# ---------------------------------------------------------------------------
+
+class DeepConvPolicy:
+    SIGMA0 = 0.2
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, channels: tuple[int, ...] = (16, 32)):
+        self.channels = tuple(channels)
+        layers = []
+        prev = N_CHAN
+        for c in self.channels:
+            layers.append((prev, c))
+            prev = c
+        layers.append((prev, N_TOOLS))
+        self._layer_shapes = layers
+        self._weights: list[np.ndarray] = []
+        self._biases: list[np.ndarray] = []
+        # Initialize zeros — set_params replaces.
+        for cin, cout in layers:
+            self._weights.append(np.zeros((cout, cin, KSIZE, KSIZE), dtype=np.float32))
+            self._biases.append(np.zeros(cout, dtype=np.float32))
+
+    @classmethod
+    def param_count(cls, channels: tuple[int, ...] = (16, 32)) -> int:
+        layers = []
+        prev = N_CHAN
+        for c in channels:
+            layers.append((prev, c))
+            prev = c
+        layers.append((prev, N_TOOLS))
+        return sum(cout * cin * KSIZE * KSIZE + cout for cin, cout in layers)
+
+    def set_params(self, theta: np.ndarray) -> None:
+        off = 0
+        new_w, new_b = [], []
+        for cin, cout in self._layer_shapes:
+            n_w = cout * cin * KSIZE * KSIZE
+            new_w.append(theta[off:off + n_w].reshape(cout, cin, KSIZE, KSIZE).astype(np.float32))
+            off += n_w
+            new_b.append(theta[off:off + cout].astype(np.float32))
+            off += cout
+        self._weights = new_w
+        self._biases = new_b
+
+    def get_params(self) -> np.ndarray:
+        parts = []
+        for w, b in zip(self._weights, self._biases):
+            parts.append(w.ravel()); parts.append(b)
+        return np.concatenate(parts).astype(np.float32)
+
+    def reset(self) -> None:
+        pass
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        x = encode_obs(tile_map)
+        for i, (w, b) in enumerate(zip(self._weights, self._biases)):
+            x = _conv2d_same(x, w, b)
+            # ReLU on all except the last (logits) layer
+            if i < len(self._weights) - 1:
+                x = np.maximum(0.0, x)
+        flat = x.reshape(-1)
+        idx = int(np.argmax(flat))
+        tool = idx // (OBS_H * OBS_W)
+        rem = idx % (OBS_H * OBS_W)
+        y_obs = rem // OBS_W
+        x_obs = rem % OBS_W
+        wx = x_obs * OBS_STRIDE + OBS_STRIDE // 2
+        wy = y_obs * OBS_STRIDE + OBS_STRIDE // 2
+        return tool, wx, wy
+
+
+# ---------------------------------------------------------------------------
+# Factory
+# ---------------------------------------------------------------------------
+
+POLICY_REGISTRY = {
+    "conv":      ConvPolicy,
+    "tape":      ActionTape,
+    "mlp":       MLPPolicy,
+    "deepconv":  DeepConvPolicy,
+}
+
+
+def make_policy(name: str, **kwargs):
+    """Construct a policy by name. Unknown kwargs are passed to the policy ctor."""
+    if name not in POLICY_REGISTRY:
+        raise KeyError(f"unknown policy {name!r}; choices: {sorted(POLICY_REGISTRY)}")
+    cls = POLICY_REGISTRY[name]
+    return cls(**kwargs)
+
+
+def policy_param_count(name: str, **kwargs) -> int:
+    """Param count for a policy without constructing one (for CMA-ES setup)."""
+    cls = POLICY_REGISTRY[name]
+    # ConvPolicy.param_count() takes no args; others may accept their ctor kwargs.
+    try:
+        return cls.param_count(**kwargs)
+    except TypeError:
+        return cls.param_count()
