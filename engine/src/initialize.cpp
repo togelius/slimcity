@@ -75,7 +75,14 @@
 /** Reset many game state variables */
 void Micropolis::initWillStuff()
 {
-    randomlySeedRandom();
+    // slimcity patch: do NOT reseed from gettimeofday() here.
+    // generateSomeCity(seed) calls generateMap(seed) BEFORE this function,
+    // which seeds the RNG deterministically. Reseeding from wall-clock time
+    // here destroys that determinism — every reset() was getting a different
+    // RNG state, making same-theta-same-seed evaluations non-reproducible
+    // across Python processes. Removing this call lets the deterministic
+    // seed survive.
+    // randomlySeedRandom();
     initGraphMax();
     destroyAllSprites();
 
