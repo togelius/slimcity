@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import multiprocessing as mp
 import os
+import sys
 import time
 
 import numpy as np
@@ -126,7 +127,10 @@ def main():
     ap.add_argument("--policy-hidden", type=int, default=32,
                     help="MLP hidden width (only for --policy mlp)")
     ap.add_argument("--policy-channels", type=str, default="16,32",
-                    help="DeepConv channels (comma sep, only for --policy deepconv)")
+                    help="DeepConv channels (comma sep). Used by --policy deepconv "
+                         "and as the net half of --policy hybrid.")
+    ap.add_argument("--policy-tape-len", type=int, default=50,
+                    help="length of the tape prefix for --policy hybrid")
     ap.add_argument("--fitness", type=str, default="pop",
                     choices=["pop", "dense", "varied"],
                     help="pop = cityPop delta; "
@@ -145,6 +149,14 @@ def main():
         policy_kwargs = {"hidden": args.policy_hidden}
     elif args.policy == "deepconv":
         policy_kwargs = {"channels": tuple(int(c) for c in args.policy_channels.split(","))}
+    elif args.policy == "hybrid":
+        policy_kwargs = {
+            "n_tape": args.policy_tape_len,
+            "channels": tuple(int(c) for c in args.policy_channels.split(",")),
+        }
+        if args.policy_tape_len >= args.n_actions:
+            print(f"warning: --policy-tape-len ({args.policy_tape_len}) >= --n-actions "
+                  f"({args.n_actions}) — the net half will never run", file=sys.stderr)
 
     if args.workers > 1:
         # Keep numpy/BLAS single-threaded inside workers so they don't all fight

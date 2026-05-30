@@ -398,6 +398,65 @@ class DeepConvPolicy:
 
 
 # ---------------------------------------------------------------------------
+# HybridPolicy: open-loop ActionTape for the first n_tape steps, then a
+# closed-loop DeepConvPolicy for the remaining steps.
+#
+# Motivation: pure ActionTape wins by carpet-bombing the map — place enough
+# diverse stuff that a few zones randomly end up adjacent to a power source
+# and grow. But it's purely open-loop and wastes most placements. A pure
+# closed-loop net fails because from an empty map, its zero-init output is
+# degenerate and CMA-ES never breaks the symmetry.
+#
+# The hybrid is a tuple <tape params, net weights>. The tape solves the
+# bootstrap (puts enough stuff on the map that the net has something to
+# react to). The net then refines, placing infrastructure where it sees
+# zones that need power/roads/etc.
+#
+# Single flat θ for CMA-ES: [tape (n_tape*3), net (DeepConv.param_count)].
+# Episode length is set by the env's n_actions; first n_tape go to the
+# tape, the rest go to the net.
+# ---------------------------------------------------------------------------
+
+class HybridPolicy:
+    SIGMA0 = 0.3                  # compromise between tape (1.0) and net (~0.1-0.2)
+    RECOMMENDED_ES = "sep_cma_es"  # ~thousands of params
+
+    def __init__(self, n_tape: int = 50, channels: tuple[int, ...] = (8, 16)):
+        self.n_tape = n_tape
+        self.channels = tuple(channels)
+        self.tape = ActionTape(n_actions=n_tape)
+        self.net = DeepConvPolicy(channels=channels)
+        self.step_idx = 0
+
+    @classmethod
+    def param_count(cls, n_tape: int = 50, channels: tuple[int, ...] = (8, 16)) -> int:
+        return (
+            ActionTape.param_count(n_actions=n_tape)
+            + DeepConvPolicy.param_count(channels=channels)
+        )
+
+    def set_params(self, theta: np.ndarray) -> None:
+        n_tape_params = self.n_tape * 3
+        self.tape.set_params(theta[:n_tape_params])
+        self.net.set_params(theta[n_tape_params:])
+
+    def get_params(self) -> np.ndarray:
+        return np.concatenate([self.tape.get_params(), self.net.get_params()]).astype(np.float32)
+
+    def reset(self) -> None:
+        self.step_idx = 0
+        self.tape.reset()
+        self.net.reset()
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        if self.step_idx < self.n_tape:
+            self.step_idx += 1
+            return self.tape.act(tile_map)
+        self.step_idx += 1
+        return self.net.act(tile_map)
+
+
+# ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
 
@@ -407,6 +466,7 @@ POLICY_REGISTRY = {
     "ctxtape":   ContextualTape,
     "mlp":       MLPPolicy,
     "deepconv":  DeepConvPolicy,
+    "hybrid":    HybridPolicy,
 }
 
 
