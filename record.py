@@ -186,11 +186,21 @@ def main():
     ap.add_argument("--mode", choices=["idle", "random", "policy"], default="idle")
     ap.add_argument("--archive", default=None,
                     help="npz archive to load policy params from")
+    ap.add_argument("--policy", default="conv",
+                    help="policy representation for --mode policy: "
+                         "conv | tape | ctxtape | mlp | deepconv")
+    ap.add_argument("--policy-n-actions", type=int, default=None,
+                    help="n_actions for tape/ctxtape policies (default = --frames)")
+    ap.add_argument("--policy-hidden", type=int, default=32,
+                    help="MLP hidden width (only for --policy mlp)")
+    ap.add_argument("--policy-channels", type=str, default="16,32",
+                    help="DeepConv channels comma-sep (only for --policy deepconv)")
     ap.add_argument("--scale", type=int, default=5, help="pixels per tile")
     ap.add_argument("--frames", type=int, default=120)
     ap.add_argument("--ticks-per-frame", type=int, default=20)
-    ap.add_argument("--warmup", type=int, default=500)
-    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--warmup", type=int, default=0,
+                    help="ticks before the policy starts acting (default 0 for empty maps)")
+    ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--ms-per-frame", type=int, default=120,
                     help="GIF duration per frame in ms (lower = faster playback)")
     ap.add_argument("--out", default="city.gif")
@@ -209,14 +219,24 @@ def main():
         if not args.archive or not os.path.exists(args.archive):
             print(f"error: --mode policy needs --archive <path-to-npz>", file=sys.stderr)
             sys.exit(1)
-        from policy import ConvPolicy
+        from policy import make_policy
         d = np.load(args.archive)
         if len(d["objectives"]) == 0:
             print("error: archive is empty", file=sys.stderr); sys.exit(1)
         idx = int(np.argmax(d["objectives"]))
-        policy = ConvPolicy()
+        # Build per-policy kwargs
+        policy_kwargs: dict = {}
+        if args.policy in ("tape", "ctxtape"):
+            n_act = args.policy_n_actions if args.policy_n_actions is not None else args.frames
+            policy_kwargs = {"n_actions": n_act}
+        elif args.policy == "mlp":
+            policy_kwargs = {"hidden": args.policy_hidden}
+        elif args.policy == "deepconv":
+            policy_kwargs = {"channels": tuple(int(c) for c in args.policy_channels.split(","))}
+        policy = make_policy(args.policy, **policy_kwargs)
         policy.set_params(d["solutions"][idx].astype(np.float32))
-        print(f"  policy elite: obj={float(d['objectives'][idx]):.0f}, "
+        policy.reset()
+        print(f"  policy = {args.policy}{policy_kwargs}  elite: obj={float(d['objectives'][idx]):.1f}, "
               f"measures={d['measures'][idx]}")
 
     font = _load_font()
