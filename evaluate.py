@@ -95,7 +95,112 @@ def _variety_bonus(tile_map: np.ndarray) -> float:
     return 2.0 * n_kinds   # up to +12 with all six categories present
 
 
+def _growth_bonus(tile_map: np.ndarray) -> float:
+    """Count tiles that have transitioned past their ungrown state.
+
+    Freshly placed 3×3 zones occupy tile IDs at the LOW end of each zone
+    range (240-248 residential, 423-431 commercial, 612-620 industrial).
+    When a zone grows the engine swaps in higher tile IDs. Counting tiles
+    past the ungrown stamp gives intermediate credit BEFORE cityPop jumps
+    up — useful gradient for "almost grew a zone" states the net half can
+    optimize against.
+
+    Scale: 0.5 per grown tile. A fully-grown 3×3 zone contributes ~4-9.
+    """
+    grown_res = ((tile_map > 248) & (tile_map <= 422)).sum()
+    grown_com = ((tile_map > 431) & (tile_map <= 611)).sum()
+    grown_ind = ((tile_map > 620) & (tile_map <= 692)).sum()
+    return 0.5 * float(grown_res + grown_com + grown_ind)
+
+
+def _adjacency_bonus(tile_map: np.ndarray) -> float:
+    """Reward zones that are adjacent to power conductors and roads.
+
+    These are necessary preconditions for growth in Micropolis. A zone
+    surrounded by dirt cannot grow regardless of how much sim time passes,
+    so rewarding spatial connection gives policies a path to climb that
+    doesn't require accidentally satisfying every condition at once.
+
+    Scale: 0.1 per (zone tile, neighbor) pair. A 3×3 zone fully bordered
+    by road + plant on all sides gives ~3-9 per zone.
+    """
+    is_res = (tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])
+    is_com = (tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])
+    is_ind = (tile_map >= IND_RANGE[0]) & (tile_map <= IND_RANGE[1])
+    zone = is_res | is_com | is_ind
+
+    road  = (tile_map >= 64)  & (tile_map <= 95)
+    wire  = (tile_map >= 208) & (tile_map <= 222)
+    plant = np.isin(tile_map, list(PLANT_TILES))
+    cond = road | wire | plant   # any power conductor
+
+    def has_nbr(mask: np.ndarray) -> np.ndarray:
+        """Returns a mask where each cell is True iff some 4-neighbor of it is in `mask`."""
+        out = np.zeros_like(mask, dtype=bool)
+        out[1:, :]  |= mask[:-1, :]
+        out[:-1, :] |= mask[1:, :]
+        out[:, 1:]  |= mask[:, :-1]
+        out[:, :-1] |= mask[:, 1:]
+        return out
+
+    zone_with_cond_nbr = zone & has_nbr(cond)
+    zone_with_road_nbr = zone & has_nbr(road)
+    return 0.1 * float(zone_with_cond_nbr.sum() + zone_with_road_nbr.sum())
+
+
 def evaluate(
+    theta: np.ndarray,
+    seed: int = 0,
+    n_actions: int = 50,
+    ticks_per_action: int = 100,
+    env: MicropolisEnv | None = None,
+    city_path: str | None = DEFAULT_CITY,
+    warmup_ticks: int = 500,
+    policy_name: str = "conv",
+    policy_kwargs: dict | None = None,
+    fitness_mode: str = "pop",
+    n_evals: int = 1,
+) -> EpisodeResult:
+    """Run one (or n_evals averaged) episodes.
+
+    When n_evals > 1, we run the same theta with seeds [seed, seed+1, ..., seed+n_evals-1]
+    and average fitness + measures across runs. This is useful for stochastic
+    policies (e.g. RandomPrefixPolicy) where any single episode is noisy.
+    The returned stats_final is from the LAST run.
+    """
+    if n_evals > 1:
+        results = []
+        for i in range(n_evals):
+            r = _evaluate_once(
+                theta,
+                seed=seed + i,
+                n_actions=n_actions,
+                ticks_per_action=ticks_per_action,
+                env=None,  # always fresh env per eval
+                city_path=city_path,
+                warmup_ticks=warmup_ticks,
+                policy_name=policy_name,
+                policy_kwargs=policy_kwargs,
+                fitness_mode=fitness_mode,
+            )
+            results.append(r)
+        avg_fitness = float(np.mean([r.fitness for r in results]))
+        avg_m0 = float(np.mean([r.measures[0] for r in results]))
+        avg_m1 = float(np.mean([r.measures[1] for r in results]))
+        return EpisodeResult(
+            fitness=avg_fitness,
+            measures=(avg_m0, avg_m1),
+            stats_final=results[-1].stats_final,
+        )
+    return _evaluate_once(
+        theta, seed=seed, n_actions=n_actions,
+        ticks_per_action=ticks_per_action, env=env, city_path=city_path,
+        warmup_ticks=warmup_ticks, policy_name=policy_name,
+        policy_kwargs=policy_kwargs, fitness_mode=fitness_mode,
+    )
+
+
+def _evaluate_once(
     theta: np.ndarray,
     seed: int = 0,
     n_actions: int = 50,
@@ -127,7 +232,12 @@ def evaluate(
 
     policy = make_policy(policy_name, **(policy_kwargs or {}))
     policy.set_params(theta)
-    policy.reset()
+    # Pass the seed to reset() — policies that need stochastic state (e.g.
+    # RandomPrefixPolicy) use it; deterministic policies ignore it.
+    try:
+        policy.reset(seed=seed)
+    except TypeError:
+        policy.reset()
 
     for _ in range(n_actions):
         tile_map = env.get_map()
@@ -147,6 +257,17 @@ def evaluate(
             pop_delta
             + _dense_bonus(final_map, env.engine.poweredZoneCount)
             + _variety_bonus(final_map)
+        )
+    elif fitness_mode == "growth":
+        # varied + zone-growth + adjacency bonuses. Designed for closed-loop
+        # policies that need gradient toward "your zone is connectable / your
+        # zone just transitioned past ungrown".
+        fitness = (
+            pop_delta
+            + _dense_bonus(final_map, env.engine.poweredZoneCount)
+            + _variety_bonus(final_map)
+            + _growth_bonus(final_map)
+            + _adjacency_bonus(final_map)
         )
     else:
         fitness = pop_delta

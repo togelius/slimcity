@@ -49,7 +49,7 @@ _WORKER_STATE: dict = {}
 def _worker_init(episode_seed: int, n_actions: int,
                  ticks_per_action: int, warmup: int,
                  policy_name: str, policy_kwargs: dict,
-                 fitness_mode: str) -> None:
+                 fitness_mode: str, n_evals: int) -> None:
     """Run once per worker process. Stashes eval kwargs. The env is NOT
     cached here — see _worker_eval. We do warm the engine .so import path
     so it's loaded once."""
@@ -63,6 +63,7 @@ def _worker_init(episode_seed: int, n_actions: int,
         policy_name=policy_name,
         policy_kwargs=policy_kwargs,
         fitness_mode=fitness_mode,
+        n_evals=n_evals,
     )
 
 
@@ -131,11 +132,17 @@ def main():
                          "and as the net half of --policy hybrid.")
     ap.add_argument("--policy-tape-len", type=int, default=50,
                     help="length of the tape prefix for --policy hybrid")
+    ap.add_argument("--policy-random-len", type=int, default=50,
+                    help="length of the random prefix for --policy randprefix")
     ap.add_argument("--fitness", type=str, default="pop",
-                    choices=["pop", "dense", "varied"],
+                    choices=["pop", "dense", "varied", "growth"],
                     help="pop = cityPop delta; "
                          "dense = + built-tile and powered-zone bonus; "
-                         "varied = dense + bonus for placing diverse tile categories")
+                         "varied = dense + bonus for placing diverse tile categories; "
+                         "growth = varied + grown-zone and zone-adjacent-to-infra bonuses")
+    ap.add_argument("--n-evals", type=int, default=1,
+                    help="evaluations per solution (averaged). >1 useful for "
+                         "stochastic policies like randprefix; cost scales linearly.")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
 
@@ -157,6 +164,18 @@ def main():
         if args.policy_tape_len >= args.n_actions:
             print(f"warning: --policy-tape-len ({args.policy_tape_len}) >= --n-actions "
                   f"({args.n_actions}) — the net half will never run", file=sys.stderr)
+    elif args.policy == "randprefix":
+        policy_kwargs = {
+            "n_random": args.policy_random_len,
+            "channels": tuple(int(c) for c in args.policy_channels.split(",")),
+        }
+        if args.policy_random_len >= args.n_actions:
+            print(f"warning: --policy-random-len ({args.policy_random_len}) >= --n-actions "
+                  f"({args.n_actions}) — the net will never run", file=sys.stderr)
+        if args.n_evals == 1:
+            print("note: randprefix with --n-evals 1 only sees one random scaffold per "
+                  "fitness eval — consider --n-evals 5 or more for noise smoothing.",
+                  file=sys.stderr)
 
     if args.workers > 1:
         # Keep numpy/BLAS single-threaded inside workers so they don't all fight
@@ -197,7 +216,8 @@ def main():
             initializer=_worker_init,
             initargs=(args.episode_seed, args.n_actions,
                       args.ticks_per_action, args.warmup,
-                      args.policy, policy_kwargs, args.fitness),
+                      args.policy, policy_kwargs, args.fitness,
+                      args.n_evals),
         )
         print(f"running with {args.workers} worker processes")
     else:
@@ -240,6 +260,7 @@ def main():
                     policy_name=args.policy,
                     policy_kwargs=policy_kwargs,
                     fitness_mode=args.fitness,
+                    n_evals=args.n_evals,
                 )
                 objectives[i] = r.fitness
                 measures[i] = r.measures
