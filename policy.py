@@ -98,7 +98,7 @@ class ConvPolicy:
     def get_params(self) -> np.ndarray:
         return np.concatenate([self.w.ravel(), self.b.ravel()]).astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         """No-op for closed-loop policies (only ActionTape uses this)."""
 
     # Recommended hyperparams for CMA-ME with this policy
@@ -148,7 +148,7 @@ class ActionTape:
     def get_params(self) -> np.ndarray:
         return self.theta.ravel().astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         self.step_idx = 0
 
     def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
@@ -238,7 +238,7 @@ class ContextualTape:
     def get_params(self) -> np.ndarray:
         return np.concatenate([self.base.ravel(), self.W.ravel()]).astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         self.step_idx = 0
 
     def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
@@ -306,7 +306,7 @@ class MLPPolicy:
             self.W_pos.ravel(), self.b_pos,
         ]).astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         pass
 
     def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
@@ -376,7 +376,7 @@ class DeepConvPolicy:
             parts.append(w.ravel()); parts.append(b)
         return np.concatenate(parts).astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         pass
 
     def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
@@ -443,7 +443,7 @@ class HybridPolicy:
     def get_params(self) -> np.ndarray:
         return np.concatenate([self.tape.get_params(), self.net.get_params()]).astype(np.float32)
 
-    def reset(self) -> None:
+    def reset(self, seed=None) -> None:
         self.step_idx = 0
         self.tape.reset()
         self.net.reset()
@@ -460,6 +460,77 @@ class HybridPolicy:
 # Factory
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# RandomPrefixPolicy: first n_random actions are *stochastic* random draws
+# (different per eval seed), then DeepConvPolicy for the rest.
+#
+# Motivation: HybridPolicy showed that an evolved-tape prefix doesn't help
+# the net beyond what tape alone produces. The hypothesis here is that
+# *random* scaffolding is even better: it forces the net to be robust across
+# different initial map states, and combined with multi-eval averaging
+# (--n-evals N in qd_train) it gives CMA-ME a smoothed gradient — policies
+# near a fitness peak benefit even when individual rollouts are noisy.
+#
+# Only the net is parameterized; the random prefix has no learnable params.
+# At the same total param count as a pure DeepConvPolicy, but the net is
+# trained against varied starting states instead of pristine empty maps.
+# ---------------------------------------------------------------------------
+
+# Same weighted tool pool as random_smoke.py — skews toward useful tools,
+# keeps destructive options (BULLDOZER, QUERY) out of the random prefix.
+_RANDOM_PREFIX_POOL = [
+    (Tool.RESIDENTIAL,   8),
+    (Tool.COMMERCIAL,    4),
+    (Tool.INDUSTRIAL,    4),
+    (Tool.ROAD,         10),
+    (Tool.WIRE,          4),
+    (Tool.PARK,          2),
+    (Tool.RAILROAD,      1),
+    (Tool.COALPOWER,     2),   # added — power source matters a lot
+]
+
+
+class RandomPrefixPolicy:
+    SIGMA0 = 0.2
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, n_random: int = 50, channels: tuple[int, ...] = (16, 32)):
+        self.n_random = n_random
+        self.channels = tuple(channels)
+        self.net = DeepConvPolicy(channels=channels)
+        self.step_idx = 0
+        self._rng: np.random.Generator | None = None
+
+    @classmethod
+    def param_count(cls, n_random: int = 50, channels: tuple[int, ...] = (16, 32)) -> int:
+        return DeepConvPolicy.param_count(channels=channels)
+
+    def set_params(self, theta: np.ndarray) -> None:
+        self.net.set_params(theta)
+
+    def get_params(self) -> np.ndarray:
+        return self.net.get_params()
+
+    def reset(self, seed=None) -> None:
+        self.step_idx = 0
+        self.net.reset()
+        # Seed the prefix RNG. If no seed is passed, fall back to entropy.
+        self._rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        if self.step_idx < self.n_random:
+            self.step_idx += 1
+            tools, weights = zip(*_RANDOM_PREFIX_POOL)
+            p = np.array(weights, dtype=np.float64)
+            p = p / p.sum()
+            tool = int(self._rng.choice(tools, p=p))
+            wx = int(self._rng.integers(0, WORLD_W))
+            wy = int(self._rng.integers(0, WORLD_H))
+            return tool, wx, wy
+        self.step_idx += 1
+        return self.net.act(tile_map)
+
+
 POLICY_REGISTRY = {
     "conv":      ConvPolicy,
     "tape":      ActionTape,
@@ -467,6 +538,7 @@ POLICY_REGISTRY = {
     "mlp":       MLPPolicy,
     "deepconv":  DeepConvPolicy,
     "hybrid":    HybridPolicy,
+    "randprefix": RandomPrefixPolicy,
 }
 
 
