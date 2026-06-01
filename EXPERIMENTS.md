@@ -74,20 +74,36 @@ The net half generates **diversity** (107–114 archive cells filled vs
 13 for tape@200) but **no extra zones**. The tape half does all the
 heavy lifting.
 
-## 2026-05-31 (later) — Growth fitness + RandomPrefix [IN PROGRESS]
+## 2026-05-31 (later) — Growth fitness + RandomPrefix
 
 Hypothesis: the variety bonus saturates too quickly to give the net half
-of hybrid useful gradient. A denser `growth` fitness rewards "your zone
-just transitioned past ungrown" and "your zone is adjacent to a road".
+useful gradient. A denser `growth` fitness rewards "your zone just
+transitioned past ungrown" and "your zone is adjacent to a road".
 RandomPrefix replaces the evolved tape with a *random* one per eval,
 combined with multi-eval averaging for noise robustness.
 
-| config | evals | status |
-| ------ | ----: | ------ |
-| `deepconv` (16,32) `growth`           | 3,000 | running |
-| `randprefix` 50+(16,32) `growth` ×5   | 2,500 | queued |
-| `randprefix` 50+(16,32) `growth` ×10  | 1,200 | queued |
-| `tape` @200 `growth`                  | 3,000 | queued |
+| config                          | evals | wall  | best obj | cityPop | insight |
+| ------------------------------- | ----: | ---:  | -------: | ------: | ------- |
+| `deepconv` (16,32) `growth`     | 3,000 | 1253s |   112.0  |       0 | Growth fitness alone didn't unblock deepconv. Plateau at obj~50 after gen 3. |
+| `randprefix` 50+(16,32) ×5      | 2,500 | 8396s |   146.5  |     160 | **First net-based growth: 1 industrial zone.** ~140 min wall time. |
+| `randprefix` 50+(16,32) ×10     | 1,200 | 7977s |    82.3  |       0 | Heavier smoothing + fewer gens didn't reach growth. |
+| `tape` @200 `growth`            | 3,000 |  525s |   686.0  |     640 | Growth fitness preserved tape's performance. |
+
+## 2026-06-01 — Ambitious overnight batch (40×40 archive)
+
+Run with persistent .npz metadata and a 1600-cell archive for richer
+diversity. Total wall time: 7h 39min.
+
+| config                          | evals  | wall   | best obj | cityPop | R/C/I | insight |
+| ------------------------------- | -----: | -----: | -------: | ------: | ----- | ------- |
+| **`tape` @600 varied**          |  5,000 |  2603s | **1,202.2** | **1,120** | **8/0/5** | **Breakthrough: first mixed R+I city.** 8 residential + 5 industrial. The longer rollout (60k ticks ≈ 30 in-game years) gives residential demand time to develop after industry. |
+| `tape` @1000 varied             |  3,000 |  2694s |  1,248.6 |     640 | 0/0/5 | Regression: bigger isn't always better. Replay (768) doesn't match stored (1248) — small residual non-determinism. |
+| `deepconv` (16,32) growth 150g  | 15,000 |  6138s |    119.8 |       0 | 0/0/0 | 347/1600 archive cells filled — wide diversity of *failure modes*. Long budget didn't help. |
+| `randprefix` ×5 growth 25g      | 12,500 |  8146s |     85.8 |     160 | 0/0/1 | Reproduces 1 ind zone but lower obj_max than May 31 5x run (different gen budget). |
+| `randprefix` ×10 growth 12g     |  6,000 |  7922s |     99.2 |       0 | 0/0/0 | Only 9 archive cells. Too few gens after 10× cost increase. |
+
+Saved archives + heatmaps in `results/overnight_*.{npz,png}`. Best elite
+GIF at `results/tape_600_best.gif` — open in macOS Preview.
 
 ## How to add a row
 

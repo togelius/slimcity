@@ -5,32 +5,40 @@ deciding what to try.
 
 ## Headline
 
-Best deterministic city grown from a blank map (as of the latest batch):
+Best deterministic city grown from a blank map:
 
-| metric                             | best |
-| ---------------------------------- | ---- |
-| **cityPop**                        | **800** |
-| number of industrial zones grown   | 5    |
-| policy                             | `tape` with 400 actions × 100 ticks |
-| total params                       | 1,200 (just (tool, x, y) triples) |
-| fitness mode                       | `varied` |
+| metric                                 | best |
+| -------------------------------------- | ---- |
+| **cityPop**                            | **1,120** |
+| zones grown                            | **13 (R=8, C=0, I=5)**    |
+| policy                                 | `tape` with 600 actions × 100 ticks |
+| total params                           | 1,800 |
+| fitness mode                           | `varied` |
+| archive                                | 40 × 40 |
 
 Best `cityPop` per representation (with the deterministic engine):
 
-| representation        | best cityPop | obj_max | params  | notes |
-| --------------------- | -----------: | ------: | ------: | ----- |
-| `tape` @100           |          480 |   508.9 |    300  | 3 ind. zones |
-| `tape` @200           |          640 |   681.8 |    600  | 4 ind. zones |
-| **`tape` @400**       |      **800** |   849.3 |  1,200  | 5 ind. zones |
-| `hybrid` (tape+conv)  |          640 |   679.7 |  ~5–11k | matches tape, doesn't beat |
-| `ctxtape`             |            0 |   181.9 |    330  | bonuses only |
-| `conv`                |            0 |   118.0 |    740  | bonuses only |
-| `deepconv` (16,32)    |            0 |   118.0 | 11–13k  | bonuses only |
-| `deepconv` (32,64)    |            0 |    63.3 | 31k     | bonuses only — got worse with more params |
-| `mlp` (h=32 / h=64)   |            0 |   10–12 | 78–155k | bonuses only — too many params for eval budget |
+| representation             | best cityPop | obj_max | params  | notes |
+| -------------------------- | -----------: | ------: | ------: | ----- |
+| `tape` @100                |          480 |   508.9 |    300  | 3 ind zones |
+| `tape` @200                |          640 |   681.8 |    600  | 4 ind zones |
+| `tape` @400                |          800 |   849.3 |  1,200  | 5 ind zones |
+| **`tape` @600**            |    **1,120** | 1,202.2 |  1,800  | **first R + I mix: 8R + 5I** |
+| `tape` @1000               |          640 | 1,248.6 |  3,000  | regressed; replay differs from stored |
+| `hybrid` (tape+conv)       |          640 |   679.7 |  ~5–11k | matches tape, doesn't beat |
+| `randprefix` 5x (overnight)|          160 |    85.8 |    11k  | 1 ind zone — first net-based growth |
+| `ctxtape`                  |            0 |   181.9 |    330  | bonuses only |
+| `conv`                     |            0 |   118.0 |    740  | bonuses only |
+| `deepconv` (16,32) growth 150g |        0 |   119.8 |    11k  | 347 archive cells, all 0 cityPop |
+| `deepconv` (32,64)         |            0 |    63.3 |    31k  | bonuses only — worse with more params |
+| `mlp` (h=32 / h=64)        |            0 |   10–12 | 78–155k | hopeless in our eval budget |
 
-Only `tape` and `hybrid` have produced cityPop > 0. Everything else has
-been gaming the variety/dense bonuses without growing zones.
+Two milestones from the overnight batch:
+- **`tape@600` produced the first mixed R+I city** (cityPop=1120). With
+  more actions and longer game time, industrial zones provide jobs to
+  residential zones nearby and *both* grow.
+- **`randprefix` 5x produced the first growth from a net-based policy**
+  (cityPop=160, 1 industrial zone) — small but nonzero.
 
 ## What works
 
