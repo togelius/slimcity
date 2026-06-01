@@ -531,6 +531,151 @@ class RandomPrefixPolicy:
         return self.net.act(tile_map)
 
 
+# ---------------------------------------------------------------------------
+# LayoutGenome: the genome IS the city, no sequential policy at all.
+#
+# A flat float vector decodes into a (GRID_H, GRID_W) categorical grid of
+# zone types plus a single tax-rate gene. At build time we:
+#   1. clearMap
+#   2. lay a regular WIRE grid (every CELL_SIZE-th row and column) so every
+#      zone in the grid is adjacent to a power conductor
+#   3. drop a fixed coal plant (power source)
+#   4. set city tax from the gene
+#   5. for each grid cell, place the chosen zone at the cell center
+#   6. tick the engine for STABILIZATION_TICKS so zones can grow
+#
+# Why wires, not roads: in this Micropolis engine, plain road tiles do
+# NOT have CONDBIT, so they don't propagate power. A wire grid does both
+# jobs — provides power and (since this engine doesn't require strict
+# road adjacency for zone growth) lets zones develop. Empirically a wire
+# grid + zones produces ~21 grown residential zones and cityPop~440;
+# the same shape with roads instead of wires produces 0.
+#
+# We integrate as a "policy" by exposing the standard set_params /
+# param_count / reset / act surface AND an IS_LAYOUT class flag plus a
+# build(env) method. evaluate._evaluate_once special-cases IS_LAYOUT to
+# call build() once and skip the action loop.
+#
+# This setup directly asks the simulator "given a viable power grid and
+# guaranteed power source, which zone composition do you reward?" —
+# more interpretable than evolving an open-ended action sequence.
+# ---------------------------------------------------------------------------
+
+# Zone vocabulary. The simulator does NOT reward placing roads/wires inside
+# the grid (those are background); the search is purely over zone composition.
+LAYOUT_CATEGORIES: tuple = (
+    None,                # 0: empty
+    Tool.RESIDENTIAL,    # 1
+    Tool.COMMERCIAL,     # 2
+    Tool.INDUSTRIAL,     # 3
+    Tool.PARK,           # 4
+)
+
+
+class LayoutGenome:
+    SIGMA0 = 0.5
+    RECOMMENDED_ES = "sep_cma_es"
+    IS_LAYOUT = True
+
+    # Defaults; can be overridden per-instance via __init__ kwargs.
+    # CELL_SIZE = 4 chosen carefully: roads at cols 0, 4, 8, ... and the
+    # 3x3 zone center at col 4i+2 puts the zone's leftmost column (4i+1)
+    # adjacent to the road at col 4i AND rightmost column (4i+3) adjacent
+    # to the road at col 4(i+1). Same for rows. So every zone has road
+    # access on all four cardinal sides — the Micropolis precondition for
+    # growth. Larger cell sizes leave zones marooned (no adjacency).
+    GRID_H = 25          # 100 / 4
+    GRID_W = 30          # 120 / 4
+    CELL_SIZE = 4
+    N_CAT = len(LAYOUT_CATEGORIES)
+
+    # Fixed coal plant location (top-center of the map). Power propagates
+    # through the road grid, so location doesn't really matter — pick a
+    # consistent spot so genomes don't have to evolve plant placement.
+    PLANT_XY: tuple[int, int] = (WORLD_W // 2, 4)
+
+    # Max tax value the engine accepts is 20% — anything beyond saturates.
+    MAX_TAX = 20
+
+    def __init__(self, grid_h: int | None = None, grid_w: int | None = None,
+                 cell_size: int | None = None):
+        if grid_h is not None: self.GRID_H = grid_h
+        if grid_w is not None: self.GRID_W = grid_w
+        if cell_size is not None: self.CELL_SIZE = cell_size
+        self.theta = np.zeros(self.param_count(
+            grid_h=self.GRID_H, grid_w=self.GRID_W
+        ), dtype=np.float32)
+
+    @classmethod
+    def param_count(cls, grid_h: int | None = None, grid_w: int | None = None,
+                    cell_size: int | None = None) -> int:
+        gh = grid_h if grid_h is not None else cls.GRID_H
+        gw = grid_w if grid_w is not None else cls.GRID_W
+        return gh * gw * cls.N_CAT + 1   # +1 for tax-rate gene
+
+    def set_params(self, theta: np.ndarray) -> None:
+        assert theta.shape == (self.param_count(grid_h=self.GRID_H, grid_w=self.GRID_W),), \
+            f"expected {self.param_count(grid_h=self.GRID_H, grid_w=self.GRID_W)} params, got {theta.shape}"
+        self.theta = theta.astype(np.float32)
+
+    def get_params(self) -> np.ndarray:
+        return self.theta.copy()
+
+    def reset(self, seed: int | None = None) -> None:
+        # Stateless across rollouts; nothing to reset.
+        pass
+
+    def act(self, tile_map: np.ndarray) -> tuple[int, int, int]:
+        # Should never be called (IS_LAYOUT short-circuits the action loop).
+        raise RuntimeError("LayoutGenome.act() should not be called — IS_LAYOUT=True")
+
+    # ----- decoding -----
+
+    def decode(self) -> tuple[np.ndarray, int]:
+        """Return (categorical (GRID_H, GRID_W) array, tax_rate)."""
+        n_grid = self.GRID_H * self.GRID_W * self.N_CAT
+        logits = self.theta[:n_grid].reshape(self.GRID_H, self.GRID_W, self.N_CAT)
+        grid = logits.argmax(axis=-1).astype(np.int32)
+        tax_scalar = float(self.theta[n_grid])
+        tax = int((np.tanh(tax_scalar) + 1.0) * 0.5 * self.MAX_TAX)
+        return grid, max(0, min(self.MAX_TAX, tax))
+
+    # ----- building -----
+
+    def build(self, env) -> None:
+        """Place tiles into a freshly-cleared map. Caller stabilizes via env.tick()."""
+        eng = env.engine
+        eng.clearMap()
+        grid, tax = self.decode()
+        eng.setCityTax(tax)
+
+        # Background wire grid — every CELL_SIZE-th row and column.
+        # Wires conduct power (CONDBIT) where plain roads don't, so this
+        # is what makes zones eligible for growth. See variant A in
+        # /tmp/grid_diag.py for the empirical comparison.
+        for x in range(0, WORLD_W, self.CELL_SIZE):
+            for y in range(WORLD_H):
+                env.place(Tool.WIRE, x, y)
+        for y in range(0, WORLD_H, self.CELL_SIZE):
+            for x in range(WORLD_W):
+                env.place(Tool.WIRE, x, y)
+
+        # Guaranteed power source — the genome doesn't have to find one.
+        env.place(Tool.COALPOWER, *self.PLANT_XY)
+
+        # Drop each zone at its cell center.
+        half = self.CELL_SIZE // 2
+        for j in range(self.GRID_H):
+            for i in range(self.GRID_W):
+                cat = int(grid[j, i])
+                tool = LAYOUT_CATEGORIES[cat]
+                if tool is None:
+                    continue
+                wx = i * self.CELL_SIZE + half
+                wy = j * self.CELL_SIZE + half
+                env.place(tool, wx, wy)
+
+
 POLICY_REGISTRY = {
     "conv":      ConvPolicy,
     "tape":      ActionTape,
@@ -539,6 +684,7 @@ POLICY_REGISTRY = {
     "deepconv":  DeepConvPolicy,
     "hybrid":    HybridPolicy,
     "randprefix": RandomPrefixPolicy,
+    "layout":    LayoutGenome,
 }
 
 

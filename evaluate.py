@@ -265,11 +265,19 @@ def _evaluate_once(
     except TypeError:
         policy.reset()
 
-    for _ in range(n_actions):
-        tile_map = env.get_map()
-        tool, wx, wy = policy.act(tile_map)
-        env.place(tool, wx, wy)
-        env.tick(ticks_per_action)
+    if getattr(policy, "IS_LAYOUT", False):
+        # Layout-evolution mode: the genome IS the city. Build once, tick
+        # for `stabilization_ticks` (re-used n_actions × ticks_per_action
+        # so the existing CLI knobs flow through). The action loop is
+        # skipped entirely.
+        policy.build(env)
+        env.tick(n_actions * ticks_per_action)
+    else:
+        for _ in range(n_actions):
+            tile_map = env.get_map()
+            tool, wx, wy = policy.act(tile_map)
+            env.place(tool, wx, wy)
+            env.tick(ticks_per_action)
 
     s = env.stats
     final_map = env.get_map()
