@@ -30,13 +30,22 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CITY: str | None = None
 
 
-def tile_descriptors(tile_map: np.ndarray) -> tuple[float, float]:
-    """Compute (road_frac, ind_share) from a (H, W) tile-id map.
+def tile_descriptors(tile_map: np.ndarray,
+                     mode: str = "road_ind") -> tuple[float, float]:
+    """Compute a 2-D QD descriptor from a (H, W) tile-id map.
 
-    road_frac: roads/rails/wires as a share of all built (non-empty) tiles.
-        0 = no infra (or empty map), 1 = all infra.
-    ind_share: industrial as a share of zoned tiles (R+C+I).
-        0 = no industry (or no zones), 1 = all industry.
+    Modes:
+        road_ind   — (road_frac, ind_share) — the original.
+            road_frac = roads / built; ind_share = industrial / zoned.
+            Pure tape pinned all elites to the road_frac=0 column.
+        res_ind    — (res_share, ind_share) within zoned tiles.
+            Spreads policies along the R/C/I balance instead of by
+            infrastructure. Should give tape something to explore beyond
+            its current narrow niche.
+        density    — (built_density, infra_density)
+            built_density = (any built) / total tiles.
+            infra_density = (road+wire+plant) / total tiles.
+            Captures sprawl vs compactness independent of zone mix.
     """
     is_res = (tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])
     is_com = (tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])
@@ -45,14 +54,27 @@ def tile_descriptors(tile_map: np.ndarray) -> tuple[float, float]:
     is_plant = np.isin(tile_map, list(PLANT_TILES))
 
     built = is_res | is_com | is_ind | is_road | is_plant
+    zoned = is_res | is_com | is_ind
     n_built = int(built.sum())
     n_road = int(is_road.sum())
-    n_zone = int((is_res | is_com | is_ind).sum())
+    n_zone = int(zoned.sum())
+    n_res = int(is_res.sum())
     n_ind = int(is_ind.sum())
+    n_total = int(tile_map.size)
+    n_infra = n_road + int(is_plant.sum())
 
-    road_frac = n_road / n_built if n_built > 0 else 0.0
-    ind_share = n_ind / n_zone if n_zone > 0 else 0.0
-    return float(road_frac), float(ind_share)
+    if mode == "road_ind":
+        m0 = n_road / n_built if n_built > 0 else 0.0
+        m1 = n_ind / n_zone if n_zone > 0 else 0.0
+    elif mode == "res_ind":
+        m0 = n_res / n_zone if n_zone > 0 else 0.0
+        m1 = n_ind / n_zone if n_zone > 0 else 0.0
+    elif mode == "density":
+        m0 = n_built / n_total
+        m1 = n_infra / n_total
+    else:
+        raise ValueError(f"unknown measures mode: {mode!r}")
+    return float(m0), float(m1)
 
 
 @dataclass
@@ -159,6 +181,7 @@ def evaluate(
     policy_name: str = "conv",
     policy_kwargs: dict | None = None,
     fitness_mode: str = "pop",
+    measures_mode: str = "road_ind",
     n_evals: int = 1,
 ) -> EpisodeResult:
     """Run one (or n_evals averaged) episodes.
@@ -182,6 +205,7 @@ def evaluate(
                 policy_name=policy_name,
                 policy_kwargs=policy_kwargs,
                 fitness_mode=fitness_mode,
+                measures_mode=measures_mode,
             )
             results.append(r)
         avg_fitness = float(np.mean([r.fitness for r in results]))
@@ -197,6 +221,7 @@ def evaluate(
         ticks_per_action=ticks_per_action, env=env, city_path=city_path,
         warmup_ticks=warmup_ticks, policy_name=policy_name,
         policy_kwargs=policy_kwargs, fitness_mode=fitness_mode,
+        measures_mode=measures_mode,
     )
 
 
@@ -211,6 +236,7 @@ def _evaluate_once(
     policy_name: str = "conv",
     policy_kwargs: dict | None = None,
     fitness_mode: str = "pop",
+    measures_mode: str = "road_ind",
 ) -> EpisodeResult:
     # IMPORTANT: For determinism, always construct a fresh MicropolisEnv per
     # call. The C++ engine carries internal state (RNG depth into the LCG,
@@ -271,7 +297,7 @@ def _evaluate_once(
         )
     else:
         fitness = pop_delta
-    measures = tile_descriptors(final_map)
+    measures = tile_descriptors(final_map, mode=measures_mode)
     return EpisodeResult(fitness=fitness, measures=measures, stats_final=s)
 
 

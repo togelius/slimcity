@@ -49,7 +49,8 @@ _WORKER_STATE: dict = {}
 def _worker_init(episode_seed: int, n_actions: int,
                  ticks_per_action: int, warmup: int,
                  policy_name: str, policy_kwargs: dict,
-                 fitness_mode: str, n_evals: int) -> None:
+                 fitness_mode: str, n_evals: int,
+                 measures_mode: str) -> None:
     """Run once per worker process. Stashes eval kwargs. The env is NOT
     cached here — see _worker_eval. We do warm the engine .so import path
     so it's loaded once."""
@@ -64,6 +65,7 @@ def _worker_init(episode_seed: int, n_actions: int,
         policy_kwargs=policy_kwargs,
         fitness_mode=fitness_mode,
         n_evals=n_evals,
+        measures_mode=measures_mode,
     )
 
 
@@ -146,6 +148,9 @@ def main():
                          "stochastic policies like randprefix; cost scales linearly.")
     ap.add_argument("--archive-dims", type=str, default="20,20",
                     help="GridArchive dims, comma-separated (e.g. 40,40 for 1600 cells)")
+    ap.add_argument("--measures", type=str, default="road_ind",
+                    choices=["road_ind", "res_ind", "density"],
+                    help="QD descriptor pair (see evaluate.tile_descriptors)")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
 
@@ -224,7 +229,7 @@ def main():
             initargs=(args.episode_seed, args.n_actions,
                       args.ticks_per_action, args.warmup,
                       args.policy, policy_kwargs, args.fitness,
-                      args.n_evals),
+                      args.n_evals, args.measures),
         )
         print(f"running with {args.workers} worker processes")
     else:
@@ -268,6 +273,7 @@ def main():
                     policy_kwargs=policy_kwargs,
                     fitness_mode=args.fitness,
                     n_evals=args.n_evals,
+                    measures_mode=args.measures,
                 )
                 objectives[i] = r.fitness
                 measures[i] = r.measures
@@ -302,6 +308,7 @@ def main():
         ticks_per_action=np.int32(args.ticks_per_action),
         warmup=np.int32(args.warmup),
         fitness=np.array(args.fitness),
+        measures_mode=np.array(args.measures),
         n_evals=np.int32(args.n_evals),
         episode_seed=np.int32(args.episode_seed),
         gens=np.int32(args.gens),
