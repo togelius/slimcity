@@ -9,12 +9,18 @@ Best deterministic city grown from a blank map:
 
 | metric                                 | best |
 | -------------------------------------- | ---- |
-| **cityPop**                            | **1,120** |
-| zones grown                            | **13 (R=8, C=0, I=5)**    |
-| policy                                 | `tape` with 600 actions × 100 ticks |
-| total params                           | 1,800 |
-| fitness mode                           | `varied` |
-| archive                                | 40 × 40 |
+| **cityPop (replay)**                   | **1,680** |
+| zones grown                            | **53 R + 2 C + 0 I**    |
+| representation                         | `layout` (direct city evolution) |
+| total params                           | 3,751 |
+| fitness mode                           | `dense` |
+| archive                                | 20 × 20 |
+
+The previous best — `tape@600` with 1,120 cityPop — held for the
+overnight batch and was beaten by the layout-evolution experiment
+documented in `LAYOUTS.md`. See that file for the answers to the
+"what does Micropolis reward" questions (low tax: yes; functional
+separation: no; dense cities: ~80% built optimal).
 
 Best `cityPop` per representation (with the deterministic engine):
 
@@ -32,6 +38,8 @@ Best `cityPop` per representation (with the deterministic engine):
 | `deepconv` (16,32) growth 150g |        0 |   119.8 |    11k  | 347 archive cells, all 0 cityPop |
 | `deepconv` (32,64)         |            0 |    63.3 |    31k  | bonuses only — worse with more params |
 | `mlp` (h=32 / h=64)        |            0 |   10–12 | 78–155k | hopeless in our eval budget |
+| **`layout` `res_ind`**     |    **1,680** | 2,255.2 |  3,751  | **direct city evolution, see [LAYOUTS.md](LAYOUTS.md)** |
+| `layout` `density`         |        1,180 | 2,106.8 |  3,751  | archive collapsed: wires not counted in infra_density |
 
 Two milestones from the overnight batch:
 - **`tape@600` produced the first mixed R+I city** (cityPop=1120). With
