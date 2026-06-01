@@ -139,6 +139,14 @@ Map<DATA, BLKSIZE>::Map(DATA defaultValue):
             MAP_H((WORLD_H + BLKSIZE - 1) / BLKSIZE),
             _MAP_DEFAULT_VALUE(defaultValue)
 {
+    // slimcity patch: zero-initialize _mapData so reads before any
+    // explicit clear()/fill() get a defined value. The original engine
+    // relied on the caller (initWillStuff) clearing each map before use,
+    // but some maps (powerGridMap, tempMap1/2/3) aren't in that list, so
+    // they were being read as garbage from the heap.
+    for (int i = 0; i < this->MAP_W * this->MAP_H; i++) {
+        this->_mapData[i] = defaultValue;
+    }
 }
 
 

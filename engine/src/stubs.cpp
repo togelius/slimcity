@@ -185,7 +185,13 @@ Quad Micropolis::tickCount()
  */
 Ptr Micropolis::newPtr(int size)
 {
-    return (Ptr)malloc(size);
+    // slimcity patch: zero the allocation. malloc() returns uninitialized
+    // memory; if anything in the engine reads from a newPtr-allocated
+    // buffer before fully writing it (e.g. history arrays referenced from
+    // early sim steps), the read picks up garbage that varies per process,
+    // and the sim diverges. calloc gives us reproducible zero-init.
+    void *p = calloc(1, (size_t)size);
+    return (Ptr)p;
 }
 
 
