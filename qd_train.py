@@ -79,10 +79,11 @@ def _worker_eval(theta: np.ndarray) -> tuple[float, float, float]:
 
 
 def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: float,
-                    es: str = "sep_cma_es"):
+                    es: str = "sep_cma_es",
+                    grid_dims: tuple[int, int] = (20, 20)):
     archive = GridArchive(
         solution_dim=n_params,
-        dims=[20, 20],                            # 20x20 = 400 archive cells
+        dims=list(grid_dims),                     # default 20x20 = 400 archive cells
         ranges=[(0.0, 1.0), (0.0, 1.0)],          # (road_frac, ind_share)
         seed=0,
     )
@@ -143,6 +144,8 @@ def main():
     ap.add_argument("--n-evals", type=int, default=1,
                     help="evaluations per solution (averaged). >1 useful for "
                          "stochastic policies like randprefix; cost scales linearly.")
+    ap.add_argument("--archive-dims", type=str, default="20,20",
+                    help="GridArchive dims, comma-separated (e.g. 40,40 for 1600 cells)")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
 
@@ -197,13 +200,17 @@ def main():
     print(f"policy = {args.policy}  params = {n_params}  sigma0 = {args.sigma0}  es = {args.es}")
     print(f"fitness = {args.fitness}")
 
+    grid_dims = tuple(int(d) for d in args.archive_dims.split(","))
+    assert len(grid_dims) == 2, f"expected 2 dims, got {grid_dims}"
     scheduler, archive = build_scheduler(
         n_params=n_params,
         n_emitters=args.emitters,
         batch_size=args.batch,
         sigma0=args.sigma0,
         es=args.es,
+        grid_dims=grid_dims,
     )
+    print(f"archive = {grid_dims[0]}x{grid_dims[1]} = {grid_dims[0]*grid_dims[1]} cells")
 
     # Set up either a sequential mode (workers=1) or a process Pool (workers>1).
     # Note: even in sequential mode we construct a fresh env per eval to keep
@@ -278,13 +285,30 @@ def main():
         )
 
     print(f"\ntotal: {time.time()-t_start:.1f}s")
-    # Save archive contents — ribs 0.8 API
-    data = archive.data()  # dict of arrays: solution, objective, measures, ...
+    # Save archive contents — ribs 0.8 API. Also store enough metadata that
+    # any consumer (replay scripts, heatmap plotter, collaborator) can decode
+    # the archive without needing the CLI args.
+    data = archive.data()
     np.savez(
         args.save,
         solutions=data["solution"],
         objectives=data["objective"],
         measures=data["measures"],
+        # Metadata
+        grid_dims=np.array(grid_dims, dtype=np.int32),
+        policy=np.array(args.policy),
+        policy_kwargs=np.array(repr(policy_kwargs)),
+        n_actions=np.int32(args.n_actions),
+        ticks_per_action=np.int32(args.ticks_per_action),
+        warmup=np.int32(args.warmup),
+        fitness=np.array(args.fitness),
+        n_evals=np.int32(args.n_evals),
+        episode_seed=np.int32(args.episode_seed),
+        gens=np.int32(args.gens),
+        emitters=np.int32(args.emitters),
+        batch=np.int32(args.batch),
+        sigma0=np.float32(args.sigma0),
+        es=np.array(args.es),
     )
     print(f"saved archive to {args.save} ({len(data['objective'])} elites)")
 

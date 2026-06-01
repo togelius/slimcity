@@ -30,3 +30,11 @@ Thumbs.db
 
 # Local Claude Code settings (per-machine permission allowlist)
 .claude/settings.local.json
+
+# Training archives — regenerable, large. The EXPERIMENTS.md / RESULTS.md
+# files in the repo describe what each run was. Use `python3 qd_train.py
+# --save results/<name>.npz` to reproduce.
+results/*.npz
+results/*.gif
+results/*.png
+results/*.log
