@@ -10,6 +10,15 @@ The C++ engine is the GPL v3 OLPC release of Micropolis (originally
 Electronic Arts Inc., 1989–2007). This wrapper and search code are
 distributed under the same license — see [LICENSE](LICENSE).
 
+## For collaborators
+
+- **[RESULTS.md](RESULTS.md)** — what works, what doesn't, current leaderboard.
+- **[EXPERIMENTS.md](EXPERIMENTS.md)** — chronological log of every training
+  run, with config, wall time, replay-verified result, and a one-line
+  insight. Append a new row when you launch a long run.
+- All saved archives carry their full config as `.npz` metadata, so any
+  result can be reproduced or replayed without runtime args.
+
 ## Layout
 
 ```
