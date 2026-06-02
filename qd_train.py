@@ -164,6 +164,11 @@ def main():
         policy_kwargs = {"hidden": args.policy_hidden}
     elif args.policy == "deepconv":
         policy_kwargs = {"channels": tuple(int(c) for c in args.policy_channels.split(","))}
+    elif args.policy == "rich_deepconv":
+        policy_kwargs = {
+            "n_actions": args.n_actions,
+            "channels": tuple(int(c) for c in args.policy_channels.split(",")),
+        }
     elif args.policy == "hybrid":
         policy_kwargs = {
             "n_tape": args.policy_tape_len,
