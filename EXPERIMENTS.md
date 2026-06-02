@@ -105,6 +105,47 @@ diversity. Total wall time: 7h 39min.
 Saved archives + heatmaps in `results/overnight_*.{npz,png}`. Best elite
 GIF at `results/tape_600_best.gif` — open in macOS Preview.
 
+## 2026-06-01 — Richer QD measures + longer runs (40×40 archive)
+
+Added `--measures {road_ind, res_ind, density}` so QD descriptors aren't
+locked to the original (road_frac, ind_share) pair. Also fixed two engine
+zero-init bugs (calloc in newPtr; Map._mapData fill in constructor) that
+partially address the residual non-determinism — same θ now gives a
+tighter spread of fitness values across processes, but still not bit-
+identical. Pragmatic workaround: `--n-evals N` to average fitness across
+N rollouts.
+
+| config                                | evals  | wall   | best obj | cityPop | R/C/I | insight |
+| ------------------------------------- | -----: | -----: | -------: | ------: | ----- | ------- |
+| `tape@800` res_ind n_evals=3          | 15,000 | 10780s |  1,096.3 |    780 | 11/0/4 | Most residential ever (11 R), but lower total than tape@600 — different city shape. |
+| `tape@600` res_ind n_evals=1          |  5,000 |  2590s |  1,202.2 |  1,120 |  8/0/5 | Same peak as overnight road_ind; res_ind broadens elites 6× (33 → 196). |
+| `hybrid` 80+(16,32)@250 growth n=3    | 12,000 |  9221s |    733.2 |    640 |  0/0/5 | Highest archive coverage (483 elites), peak unchanged. |
+| `randprefix` 5× 40g density growth    | 40,000 | 13169s |    152.8 |      0 |  -    | Density measures clustered all elites into 1 cell — bad measure choice. |
+| `deepconv` 200g density growth n=3    | 60,000 | 24835s |    144.7 |      0 |  -    | Same — density doesn't discriminate net policies. |
+
+## 2026-06-02 — Perturbation study
+
+Investigated why `hybrid` has 3× more archive elites than `tape@600`
+despite tape having 1.8× higher peak. Took the best elite of each, then
+generated 60 random θ perturbations at six σ levels and re-evaluated.
+
+| policy        | peak | σ=0.01 median | σ=0.01 max | distinct cells σ=1.0 |
+| ------------- | ---: | ------------: | ---------: | -------------------: |
+| `tape@600`    | 1202 |          74.3 |      871.2 |                   33 |
+| `hybrid_long` |  684 |          33.2 |      681.0 |                   52 |
+
+Findings:
+- **Tape's peak is a knife-edge.** σ=0.010 perturbation drops median fitness 94%. Almost no "good neighbors" exist in θ-space.
+- **Hybrid is equally sharp** — its peak is also surrounded by low-fitness perturbations.
+- **Hybrid spreads more measures-cells per perturbation** because it has 6× more parameters, each contributing an independent measure-space direction.
+- **The hybrid archive isn't full of better cells than tape's** — it's full of *more* cells, mostly low fitness.
+- Even σ=1.0 perturbations of tape occasionally hit fitness 870+ (cityPop ~830) — good policies exist scattered across θ-space, but the QD measures don't put them adjacent to the peak.
+
+Takeaway: the QD measure choice strongly affects what "neighbor" means.
+With richer measures (e.g. discretized R/C/I shares), tape might fill
+more cells without changing the peak. The non-trivial insight is that
+adjacency in θ-space does NOT predict adjacency in measure-space.
+
 ## How to add a row
 
 When you launch a long run, append a row here with the same shape.
