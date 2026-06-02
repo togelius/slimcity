@@ -40,6 +40,16 @@ N_TOOLS = 20  # see Tool class
 KSIZE = 3
 N_PARAMS = N_CHAN * N_TOOLS * KSIZE * KSIZE + N_TOOLS  # weights + bias
 
+# Rich obs channel count:
+#   spatial: R, C, I, infra, power, growth = 6
+#   broadcast scalars: cityPop, funds, step, pollution, crime, R_demand,
+#                      C_demand, I_demand = 8
+RICH_N_SPATIAL = 6
+RICH_N_SCALAR = 8
+RICH_N_CHAN = RICH_N_SPATIAL + RICH_N_SCALAR  # 14
+
+PWRBIT = 0x8000   # tile is powered
+
 
 def n_params() -> int:
     return N_PARAMS
@@ -59,6 +69,68 @@ def encode_obs(tile_map: np.ndarray) -> np.ndarray:
         return x.reshape(OBS_H, OBS_STRIDE, OBS_W, OBS_STRIDE).max(axis=(1, 3))
 
     return np.stack([pool(is_res), pool(is_com), pool(is_ind), pool(is_inf)], axis=0)
+
+
+def encode_obs_rich(tile_map: np.ndarray, tile_map_raw: np.ndarray,
+                    engine, step_idx: int, n_actions: int) -> np.ndarray:
+    """Richer observation: 6 spatial channels + 8 broadcast scalars.
+
+    Inputs:
+        tile_map      — (H, W) uint16 of tile IDs (low 10 bits)
+        tile_map_raw  — (H, W) uint16 of full tile values (incl. PWRBIT)
+        engine        — SWIG-wrapped Micropolis object, for global state
+        step_idx, n_actions — current step / total steps in episode
+
+    Returns: float32 array of shape (RICH_N_CHAN, OBS_H, OBS_W) = (14, 20, 24)
+    where channels 0-5 are spatial (max-pooled), 6-13 are broadcast scalars.
+    """
+    is_res = ((tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])).astype(np.float32)
+    is_com = ((tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])).astype(np.float32)
+    is_ind = ((tile_map >= IND_RANGE[0]) & (tile_map <= IND_RANGE[1])).astype(np.float32)
+    is_inf = ((tile_map >= ROAD_RANGE[0]) & (tile_map <= ROAD_RANGE[1])).astype(np.float32)
+    for tid in PLANT_TILES:
+        is_inf = np.maximum(is_inf, (tile_map == tid).astype(np.float32))
+
+    # Power: PWRBIT set on the raw tile value
+    is_powered = ((tile_map_raw & PWRBIT) != 0).astype(np.float32)
+
+    # Growth: per-tile how far past the ungrown stamp the tile has grown,
+    # normalized to ~[0, 1] per category. We use a simple per-tile fraction.
+    growth = np.zeros_like(is_res, dtype=np.float32)
+    res_mask = is_res > 0
+    com_mask = is_com > 0
+    ind_mask = is_ind > 0
+    # Ungrown stamp goes 240-248 for R; LASTRES is 422. Range = 174.
+    growth[res_mask] = np.clip((tile_map[res_mask].astype(np.float32) - 248.0) / 174.0, 0.0, 1.0)
+    growth[com_mask] = np.clip((tile_map[com_mask].astype(np.float32) - 431.0) / 180.0, 0.0, 1.0)
+    growth[ind_mask] = np.clip((tile_map[ind_mask].astype(np.float32) - 620.0) / 72.0, 0.0, 1.0)
+
+    def pool_max(x):
+        return x.reshape(OBS_H, OBS_STRIDE, OBS_W, OBS_STRIDE).max(axis=(1, 3))
+
+    spatial = np.stack([
+        pool_max(is_res), pool_max(is_com), pool_max(is_ind), pool_max(is_inf),
+        pool_max(is_powered), pool_max(growth),
+    ], axis=0).astype(np.float32)
+
+    # Global scalars (normalized roughly to [-1, 1] or [0, 1])
+    city_pop_n = min(engine.cityPop / 5000.0, 2.0)         # normalize big cities to ~2
+    funds_n    = min(engine.totalFunds / 1_000_000.0, 2.0)
+    step_n     = step_idx / max(1, n_actions)
+    pollu_n    = engine.pollutionAverage / 255.0
+    crime_n    = engine.crimeAverage / 255.0
+    # getDemands returns [R, C, I] in [-1, 1]; SWIG binding wraps it in this form
+    demands = engine.getDemands()
+    r_d, c_d, i_d = float(demands[0]), float(demands[1]), float(demands[2])
+
+    scalar_vals = np.array(
+        [city_pop_n, funds_n, step_n, pollu_n, crime_n, r_d, c_d, i_d],
+        dtype=np.float32,
+    )
+    # Broadcast each scalar to a full (OBS_H, OBS_W) channel
+    broadcast = np.broadcast_to(scalar_vals[:, None, None], (RICH_N_SCALAR, OBS_H, OBS_W))
+
+    return np.concatenate([spatial, broadcast], axis=0)
 
 
 def _conv2d_same(x: np.ndarray, w: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -676,15 +748,103 @@ class LayoutGenome:
                 env.place(tool, wx, wy)
 
 
+# ---------------------------------------------------------------------------
+# RichDeepConvPolicy: like DeepConvPolicy, but with the 14-channel rich obs
+# (6 spatial: R/C/I/infra/power/growth + 8 broadcast scalars: cityPop, funds,
+# step_frac, pollution, crime, R/C/I demands).
+#
+# Same conv stack + argmax decode as DeepConvPolicy. Reads engine state at
+# each step via the `engine` kwarg of act(). Existing policies' act() takes
+# an `engine` kwarg too (ignored) for a uniform calling convention.
+# ---------------------------------------------------------------------------
+
+class RichDeepConvPolicy:
+    SIGMA0 = 0.2
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, n_actions: int = 100, channels: tuple[int, ...] = (16, 32)):
+        self.n_actions = n_actions
+        self.channels = tuple(channels)
+        layers = []
+        prev = RICH_N_CHAN
+        for c in self.channels:
+            layers.append((prev, c))
+            prev = c
+        layers.append((prev, N_TOOLS))
+        self._layer_shapes = layers
+        self._weights: list[np.ndarray] = []
+        self._biases: list[np.ndarray] = []
+        for cin, cout in layers:
+            self._weights.append(np.zeros((cout, cin, KSIZE, KSIZE), dtype=np.float32))
+            self._biases.append(np.zeros(cout, dtype=np.float32))
+        self.step_idx = 0
+
+    @classmethod
+    def param_count(cls, n_actions: int = 100,
+                    channels: tuple[int, ...] = (16, 32)) -> int:
+        layers = []
+        prev = RICH_N_CHAN
+        for c in channels:
+            layers.append((prev, c))
+            prev = c
+        layers.append((prev, N_TOOLS))
+        return sum(cout * cin * KSIZE * KSIZE + cout for cin, cout in layers)
+
+    def set_params(self, theta: np.ndarray) -> None:
+        off = 0
+        new_w, new_b = [], []
+        for cin, cout in self._layer_shapes:
+            n_w = cout * cin * KSIZE * KSIZE
+            new_w.append(theta[off:off + n_w].reshape(cout, cin, KSIZE, KSIZE).astype(np.float32))
+            off += n_w
+            new_b.append(theta[off:off + cout].astype(np.float32))
+            off += cout
+        self._weights = new_w
+        self._biases = new_b
+
+    def get_params(self) -> np.ndarray:
+        parts = []
+        for w, b in zip(self._weights, self._biases):
+            parts.append(w.ravel()); parts.append(b)
+        return np.concatenate(parts).astype(np.float32)
+
+    def reset(self, seed=None) -> None:
+        self.step_idx = 0
+
+    def act(self, tile_map, engine=None, tile_map_raw=None):
+        if engine is None or tile_map_raw is None:
+            raise RuntimeError(
+                "RichDeepConvPolicy requires engine= and tile_map_raw= "
+                "(evaluate.py passes both when policy supports rich obs)."
+            )
+        x = encode_obs_rich(tile_map, tile_map_raw, engine,
+                            self.step_idx, self.n_actions)
+        for i, (w, b) in enumerate(zip(self._weights, self._biases)):
+            x = _conv2d_same(x, w, b)
+            if i < len(self._weights) - 1:
+                x = np.maximum(0.0, x)
+        flat = x.reshape(-1)
+        idx = int(np.argmax(flat))
+        tool = idx // (OBS_H * OBS_W)
+        rem = idx % (OBS_H * OBS_W)
+        y_obs = rem // OBS_W
+        x_obs = rem % OBS_W
+        wx = x_obs * OBS_STRIDE + OBS_STRIDE // 2
+        wy = y_obs * OBS_STRIDE + OBS_STRIDE // 2
+        self.step_idx += 1
+        return tool, wx, wy
+
+
 POLICY_REGISTRY = {
-    "conv":      ConvPolicy,
-    "tape":      ActionTape,
-    "ctxtape":   ContextualTape,
-    "mlp":       MLPPolicy,
-    "deepconv":  DeepConvPolicy,
-    "hybrid":    HybridPolicy,
-    "randprefix": RandomPrefixPolicy,
-    "layout":    LayoutGenome,
+    "conv":         ConvPolicy,
+    "tape":         ActionTape,
+    "ctxtape":      ContextualTape,
+    "mlp":          MLPPolicy,
+    "deepconv":     DeepConvPolicy,
+    "rich_deepconv": RichDeepConvPolicy,
+    "hybrid":       HybridPolicy,
+    "randprefix":   RandomPrefixPolicy,
+    "layout":       LayoutGenome,
 }
 
 

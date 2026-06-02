@@ -145,6 +145,21 @@ class MicropolisEnv:
                 out[y, x] = eng.getTile(x, y) & TILE_MASK
         return out
 
+    def get_map_raw(self) -> np.ndarray:
+        """Return a (WORLD_H, WORLD_W) uint16 array of FULL tile values
+        including status bits — PWRBIT (0x8000), CONDBIT (0x4000), ZONEBIT
+        (0x0400), ANIMBIT, BURNBIT, BULLBIT.
+
+        Useful for rich observations that want to know "is this tile
+        currently powered?" (PWRBIT) without consulting the powerGridMap.
+        """
+        eng = self._engine
+        out = np.empty((WORLD_H, WORLD_W), dtype=np.uint16)
+        for y in range(WORLD_H):
+            for x in range(WORLD_W):
+                out[y, x] = eng.getTile(x, y)
+        return out
+
     @property
     def stats(self) -> Stats:
         e = self._engine

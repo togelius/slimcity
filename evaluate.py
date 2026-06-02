@@ -273,9 +273,24 @@ def _evaluate_once(
         policy.build(env)
         env.tick(n_actions * ticks_per_action)
     else:
+        # Does this policy want rich obs (engine handle + raw tile map)?
+        # Detect by checking act()'s parameter names; cheap and avoids
+        # changing every existing policy class's signature.
+        import inspect
+        sig = inspect.signature(policy.act)
+        wants_engine = "engine" in sig.parameters
+        wants_raw = "tile_map_raw" in sig.parameters
+
         for _ in range(n_actions):
             tile_map = env.get_map()
-            tool, wx, wy = policy.act(tile_map)
+            if wants_engine and wants_raw:
+                tile_map_raw = env.get_map_raw()
+                tool, wx, wy = policy.act(tile_map, engine=env.engine,
+                                          tile_map_raw=tile_map_raw)
+            elif wants_engine:
+                tool, wx, wy = policy.act(tile_map, engine=env.engine)
+            else:
+                tool, wx, wy = policy.act(tile_map)
             env.place(tool, wx, wy)
             env.tick(ticks_per_action)
 
