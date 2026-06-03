@@ -33,13 +33,18 @@ def dry_run() -> bool:
     return r.returncode == 0
 
 
-def send(to: str, subject: str, body_path: str) -> bool:
+DEFAULT_SENDER = "julian.togelius@gmail.com"  # must match an enabled Mail account
+
+
+def send(to: str, subject: str, body_path: str, sender: str = DEFAULT_SENDER) -> bool:
     # AppleScript reads the body file as UTF-8; subject is kept simple ASCII.
+    # `sender` MUST be set to a configured account's address, otherwise Mail
+    # leaves the message stuck in the Outbox undelivered.
     subj = subject.replace('"', "'")
     script = f'''
     set theBody to (read POSIX file "{body_path}" as «class utf8»)
     tell application "Mail"
-        set m to make new outgoing message with properties {{subject:"{subj}", content:theBody, visible:false}}
+        set m to make new outgoing message with properties {{subject:"{subj}", sender:"{sender}", content:theBody, visible:false}}
         tell m
             make new to recipient at end of to recipients with properties {{address:"{to}"}}
         end tell
