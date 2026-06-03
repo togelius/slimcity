@@ -1,0 +1,9 @@
+=== layout 50k evals (100k ticks, 40x40 archive) ===
+=== layout 50k evals (100k ticks, 40x40 archive) ===
+policy = layout  params = 3751  sigma0 = 0.5  es = sep_cma_es
+fitness = dense
+archive = 40x40 = 1600 cells
+running with 8 worker processes
+running 500 generations, 5 emitters x 20 solutions = 100 evals/gen
+gen   1/500  filled=  19/1600  obj_max=1447.6  obj_mean=603.88  qd_score=11473.8  (6.1s, gen_max_obj=1447.6)
+gen   2/500  filled=  22/1600  obj_max=1447.6  obj_mean=635.09  qd_score=13971.9  (4.5s, gen_max_obj=969.0)

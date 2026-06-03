@@ -80,9 +80,37 @@ def _worker_eval(theta: np.ndarray) -> tuple[float, float, float]:
     return float(r.fitness), float(r.measures[0]), float(r.measures[1])
 
 
+def resolve_log_path(save: str, log: str | None) -> str | None:
+    if log:
+        return log
+    if save.endswith(".npz"):
+        return save[:-4] + ".log"
+    return None
+
+
+def load_init_theta(path: str, n_params: int) -> np.ndarray:
+    """Best elite θ from a saved archive (warm-start for all emitters)."""
+    d = np.load(path, allow_pickle=True)
+    objs = d["objectives"]
+    if len(objs) == 0:
+        raise ValueError(f"empty archive: {path}")
+    idx = int(np.argmax(objs))
+    theta = d["solutions"][idx].astype(np.float32)
+    if theta.size != n_params:
+        raise ValueError(
+            f"{path}: solution dim {theta.size} != expected {n_params}"
+        )
+    return theta, float(objs[idx])
+
+
 def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: float,
                     es: str = "sep_cma_es",
-                    grid_dims: tuple[int, int] = (20, 20)):
+                    grid_dims: tuple[int, int] = (20, 20),
+                    x0: np.ndarray | None = None):
+    if x0 is None:
+        x0 = np.zeros(n_params, dtype=np.float32)
+    else:
+        x0 = np.asarray(x0, dtype=np.float32)
     archive = GridArchive(
         solution_dim=n_params,
         dims=list(grid_dims),                     # default 20x20 = 400 archive cells
@@ -92,7 +120,7 @@ def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: flo
     emitters = [
         EvolutionStrategyEmitter(
             archive=archive,
-            x0=np.zeros(n_params, dtype=np.float32),
+            x0=x0.copy(),
             sigma0=sigma0,
             ranker="2imp",        # CMA-ME improvement ranker
             es=es,                # "sep_cma_es" scales much better than full "cma_es"
@@ -152,6 +180,10 @@ def main():
                     choices=["road_ind", "res_ind", "density", "entropy_count"],
                     help="QD descriptor pair (see evaluate.tile_descriptors)")
     ap.add_argument("--save", type=str, default="archive.npz")
+    ap.add_argument("--log", type=str, default=None,
+                    help="append per-generation stats (default: <save> with .log)")
+    ap.add_argument("--init-archive", type=str, default=None,
+                    help="warm-start all emitters from the best elite in this .npz")
     args = ap.parse_args()
 
     # Build policy kwargs based on the chosen policy
@@ -231,6 +263,13 @@ def main():
 
     grid_dims = tuple(int(d) for d in args.archive_dims.split(","))
     assert len(grid_dims) == 2, f"expected 2 dims, got {grid_dims}"
+
+    x0 = None
+    init_archive = args.init_archive
+    if init_archive:
+        x0, init_obj = load_init_theta(init_archive, n_params)
+        print(f"init-archive = {init_archive}  best stored obj = {init_obj:.1f}")
+
     scheduler, archive = build_scheduler(
         n_params=n_params,
         n_emitters=args.emitters,
@@ -238,8 +277,23 @@ def main():
         sigma0=args.sigma0,
         es=args.es,
         grid_dims=grid_dims,
+        x0=x0,
     )
     print(f"archive = {grid_dims[0]}x{grid_dims[1]} = {grid_dims[0]*grid_dims[1]} cells")
+
+    log_path = resolve_log_path(args.save, args.log)
+    log_fp = None
+    if log_path:
+        os.makedirs(os.path.dirname(log_path) or ".", exist_ok=True)
+        log_fp = open(log_path, "a", encoding="utf-8")
+        log_fp.write(
+            f"# started {time.strftime('%Y-%m-%d %H:%M:%S')}  "
+            f"policy={args.policy} gens={args.gens} save={args.save}\n"
+        )
+        if init_archive:
+            log_fp.write(f"# init-archive {init_archive}\n")
+        log_fp.flush()
+        print(f"logging generations to {log_path}")
 
     # Set up either a sequential mode (workers=1) or a process Pool (workers>1).
     # Note: even in sequential mode we construct a fresh env per eval to keep
@@ -305,7 +359,7 @@ def main():
         scheduler.tell(objectives, measures)
         dt = time.time() - t0
         stats = archive.stats
-        print(
+        line = (
             f"gen {gen+1:3d}/{args.gens}  "
             f"filled={stats.num_elites:4d}/{archive.cells}  "
             f"obj_max={stats.obj_max if stats.obj_max is not None else 0:.1f}  "
@@ -313,8 +367,17 @@ def main():
             f"qd_score={stats.qd_score:.1f}  "
             f"({dt:.1f}s, gen_max_obj={float(objectives.max()):.1f})"
         )
+        print(line)
+        if log_fp is not None:
+            log_fp.write(line + "\n")
+            log_fp.flush()
 
-    print(f"\ntotal: {time.time()-t_start:.1f}s")
+    wall = time.time() - t_start
+    print(f"\ntotal: {wall:.1f}s")
+    if log_fp is not None:
+        log_fp.write(f"# finished {time.strftime('%Y-%m-%d %H:%M:%S')}  wall={wall:.1f}s\n")
+        log_fp.flush()
+        log_fp.close()
     # Save archive contents — ribs 0.8 API. Also store enough metadata that
     # any consumer (replay scripts, heatmap plotter, collaborator) can decode
     # the archive without needing the CLI args.
@@ -340,6 +403,8 @@ def main():
         batch=np.int32(args.batch),
         sigma0=np.float32(args.sigma0),
         es=np.array(args.es),
+        init_archive=np.array(init_archive or ""),
+        wall_seconds=np.float32(wall),
     )
     print(f"saved archive to {args.save} ({len(data['objective'])} elites)")
 

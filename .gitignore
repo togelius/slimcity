@@ -5,8 +5,8 @@ engine/build/
 *.pyo
 *.so
 
-# Training artifacts
-*.npz
+# Training artifacts (root only — results/*.npz are committed for multi-machine sync)
+/*.npz
 
 # Generated visualizations (use record.py to regenerate)
 *.gif
@@ -31,10 +31,6 @@ Thumbs.db
 # Local Claude Code settings (per-machine permission allowlist)
 .claude/settings.local.json
 
-# Training archives — regenerable, large. The EXPERIMENTS.md / RESULTS.md
-# files in the repo describe what each run was. Use `python3 qd_train.py
-# --save results/<name>.npz` to reproduce.
-results/*.npz
+# Large visualizations only (archives + logs in results/ are tracked for sync)
 results/*.gif
 results/*.png
-results/*.log

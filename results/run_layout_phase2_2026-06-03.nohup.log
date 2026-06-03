@@ -1,0 +1,7 @@
+=== Wed Jun  3 14:33:28 EDT 2026 layout 200k ticks, 200 gens ===
+policy = layout  params = 3751  sigma0 = 0.5  es = sep_cma_es
+fitness = dense
+archive = 20x20 = 400 cells
+logging generations to results/exp_2026-06-03_layout_ticks200k.log
+running with 8 worker processes
+running 200 generations, 5 emitters x 20 solutions = 100 evals/gen

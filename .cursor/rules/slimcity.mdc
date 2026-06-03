@@ -1,0 +1,27 @@
+---
+description: Slimcity QD/Micropolis experiment conventions
+alwaysApply: true
+---
+
+# slimcity
+
+Quality-Diversity (CMA-ME) over headless Micropolis (SimCity 1). See README.md, RESULTS.md, EXPERIMENTS.md.
+
+## Environment
+
+- System Python 3.9; SWIG extension at `engine/build/_micropolisengine.cpython-39-darwin.so`.
+- Build if missing: `cd engine && make swig && python3 setup.py build_ext --inplace --build-temp build/temp --build-lib build`
+- Deps: `numpy`, `ribs`, `Pillow` (user install is fine).
+
+## Experiments
+
+- Save archives under `results/` with unique names (e.g. `results/exp_2026-06-03_cursor.npz`) — another machine/instance may be training in parallel.
+- Append a row to EXPERIMENTS.md when starting a long run (config, wall time, insight).
+- Archives embed full config in `.npz` metadata; replay with `record.py` / `plot_archive.py`.
+- Do not commit `*.npz`, `*.gif`, or engine build artifacts.
+
+## Code map
+
+- `qd_train.py` — CMA-ME loop; `evaluate.py` — rollout; `policy.py` — ConvPolicy; `slimcity.py` — engine wrapper.
+- Fitness: delta `cityPop`. Descriptors: `road_frac`, `ind_share`. Default map: empty (not preset cities).
+- Prefer `record.py` over `viewer.py` on macOS (Tk is unreliable).

@@ -155,7 +155,7 @@ a smoother gradient, leading to more robust policies. Three configs.
 | ------------------------------------- | -----: | -----: | -------: | ------: | ------- |
 | `randprefix` 50+(16,32)@200 n=10 25g  |  5,000 | 16916s |     82.9 |       0 | Worse than n=5 — 10x averaging kills the lucky-seed strategy that previously hit cityPop=160. |
 | `randprefix` 30+(8,16)@300 n=10 25g   |  5,000 | 15784s |     80.5 |       0 | Same — averaging selects for robustness over peak performance. |
-| `randprefix` 100+(16,32)@400 n=10 15g |  3,000 | (~6h)  |   pending| pending | Bigger prefix, longer rollout. |
+| `randprefix` 100+(16,32)@400 n=10 15g |  3,000 | —      |     —    |     —   | Not completed / not logged; deprioritized after n=10 hurt smaller configs. |
 
 Surprising finding: **heavier averaging hurts on a rare-success
 landscape.** When the underlying policy works only 1 in N attempts,
@@ -176,7 +176,7 @@ Hypothesis: the 4-channel binary obs is too impoverished. Built
 | ----------------------------------------- | ----: | -----: | -------: | ------: | -----: | ------- |
 | `rich_deepconv` (16,32) growth 60g res_ind|  6,000 |  7898s |    118.9 |       0 |    353 | **Rich obs alone doesn't unlock growth.** But archive coverage 6× larger than basic deepconv. |
 | `rich_deepconv` (16,32) varied 40g res_ind|  4,000 |  4968s |    104.2 |       0 |    181 | Simpler fitness, same story. |
-| `rich_deepconv` (8,16) growth 80g res_ind | 8,000 | pending| pending  | pending | pending| Smaller net + more gens. |
+| `rich_deepconv` (8,16) growth 80g res_ind | 8,000 | —      |     —    |     —   | Superseded by entropy_count batch (`rich_deepconv` 8,16 120g → 118.9 / cityPop 0). |
 
 Verdict: richer obs helps the policy be **more diverse** (4–6× more
 archive cells filled than basic deepconv) but still can't grow a single
@@ -219,6 +219,48 @@ Two takeaways:
   fitness, tape now hits cityPop=660 (R+I mix), vs the prior 480 ceiling
   at the same action budget. The entropy measure may be pushing tape
   toward diverse early-game seeds.
+
+## 2026-06-03 — Layout evolution (direct city genome)
+
+Reframe: evolve the **city layout** (30×25 categorical cells + tax gene,
+3751 params) instead of a placement policy. Build pipeline lays a wire
+grid + coal plant, places zones, then stabilizes for `ticks_per_action`
+sim ticks. Details in `LAYOUTS.md`.
+
+| config                          | evals  | wall   | stored obj | replay cityPop | R/C/I (best) | elites | insight |
+| ------------------------------- | -----: | -----: | ---------: | -------------: | ------------ | -----: | ------- |
+| `layout` dense `res_ind` 20×20  | 10,000 |  648s  |    2,255.2 | **1,680**      | 53/2/0       | 19/400 | **New global best cityPop** — beats `tape@600` (1,120) in ~11 min. Replay ≠ stored (~700 drift) but top-10 replays all ≥1,440. |
+| `layout` dense `density` 20×20  | 10,000 | 1974s  |    2,106.8 | 1,180          | 59/0/0       |  2/400 | Archive collapses: wires excluded from `infra_density`. |
+
+Findings (see `LAYOUTS.md` for full analysis):
+- **Low tax wins** — 16/19 elites tax ∈ [0,4]; best elite tax = 0.
+- **Balanced R/C/I** (~20% each category + ~20% empty/park) beats skew.
+- **No functional separation** — best layout co-occurrence ≈ random mixing.
+- **~80% built** is optimal; fully dense layouts don't win.
+
+## 2026-06-03 — Long layout runs (max cityPop hunt, M4)
+
+Goal: push layout evolution budget and stabilization horizon to find
+the population ceiling. Archives saved under `results/` and committed
+for multi-machine sync.
+
+| config | evals | wall | best obj | replay cityPop | R/C/I (best replay) | insight |
+| ------ | ----: | ---: | -------: | -------------: | ------------------- | ------- |
+| `layout` res_ind 40×40, 500g×5×20, ticks=100k | 50,000 | ~2200s | **2526.9** | **1820** | 78/1/0 | **Replay cityPop beats 10k baseline (1680).** Stored fitness up but replay gap persists (~600). 88 elites / 1600 cells. |
+| `layout` res_ind 20×20, 200g×5×20, ticks=200k | 20,000 | running | — | — | — | 2× stabilization (~12 game years). |
+| `layout` res_ind 40×40, 500g cont. from 50k | 50,000 | running | — | — | — | Warm-start emitters at best elite of `exp_2026-06-03_layout_resind_50k.npz`. |
+
+`qd_train.py` now appends per-gen lines to `<save>.log` and supports `--init-archive`.
+Batch: `results/run_layout_phase2_2026-06-03.sh`.
+
+Recipe (system Python 3.9):
+
+```bash
+/usr/bin/python3 qd_train.py --policy layout --gens 500 --emitters 5 --batch 20 \
+  --workers 8 --fitness dense --n-actions 1 --ticks-per-action 100000 \
+  --measures res_ind --archive-dims 40,40 \
+  --save results/exp_2026-06-03_layout_resind_50k.npz
+```
 
 ## How to add a row
 

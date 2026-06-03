@@ -1,0 +1,81 @@
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=res_ind archive=20x20 n_actions=120 ticks/action=100
+  episode determinism seed=42; sandbox=on (15.0s)
+  logging every generation -> results/elm_resind_sonnet_500_generations.jsonl
+  seed plan    fitness=   407.1 cityPop=  400 cell=(19, 0) +
+it    1 [mutat] + fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    2 [mutat] + fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    3 [cross] + fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    4 [mutat]   fit=     2.0 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    5 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    6 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it    7 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it    8 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it    9 [cross]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it   10 [cross] + fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it   11 [cross]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=2 best_pop=400 best_fit=407
+it   12 [mutat] + fit=     3.6 pop=    0 m=(0.60,0.00) cell=(12, 0) | filled=3 best_pop=400 best_fit=407
+it   13 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   14 [cross]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   15 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   16 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   17 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   18 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   19 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   20 [mutat] + fit=     5.8 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   21 [cross]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   22 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=3 best_pop=400 best_fit=407
+it   23 [mutat] + fit=   267.1 pop=  260 m=(0.60,0.00) cell=(12, 0) | filled=3 best_pop=400 best_fit=407
+it   24 [mutat] + fit=   824.9 pop=  800 m=(0.60,0.20) cell=(12, 4) | filled=4 best_pop=800 best_fit=825
+it   25 [mutat]   fit=     3.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   26 [mutat]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   27 [mutat]   fit=     2.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   28 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   29 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   30 [xover] op-error: no code block in LLM response
+it   31 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   32 [mutat]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   33 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   34 [cross] + fit=     5.8 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   35 [mutat]   fit=     3.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   36 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   37 [cross]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   38 [cross]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   39 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   40 [mutat]   fit=     3.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   41 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   42 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=4 best_pop=800 best_fit=825
+it   43 [mutat] + fit=   209.3 pop=  200 m=(0.38,0.15) cell=(7, 3) | filled=5 best_pop=800 best_fit=825
+it   44 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=5 best_pop=800 best_fit=825
+it   45 [mutat]   fit=     4.7 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=5 best_pop=800 best_fit=825
+it   46 [mutat] + fit=   270.8 pop=  260 m=(0.53,0.16) cell=(10, 3) | filled=6 best_pop=800 best_fit=825
+it   47 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=6 best_pop=800 best_fit=825
+it   48 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=6 best_pop=800 best_fit=825
+it   49 [mutat] + fit=     4.9 pop=    0 m=(0.38,0.25) cell=(7, 5) | filled=7 best_pop=800 best_fit=825
+it   50 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   51 [mutat]   fit=     4.6 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=7 best_pop=800 best_fit=825
+it   52 [mutat] + fit=   650.1 pop=  640 m=(0.46,0.36) cell=(9, 7) | filled=8 best_pop=800 best_fit=825
+it   53 [mutat]   fit=     4.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=8 best_pop=800 best_fit=825
+it   54 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   55 [cross]   fit=     5.6 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=8 best_pop=800 best_fit=825
+it   56 [mut] op-error: no code block in LLM response
+it   57 [cross] + fit=     4.0 pop=    0 m=(0.73,0.00) cell=(14, 0) | filled=9 best_pop=800 best_fit=825
+it   58 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   59 [xover] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   60 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=9 best_pop=800 best_fit=825
+it   61 [mutat] + fit=  2459.5 pop= 2440 m=(0.40,0.20) cell=(8, 4) | filled=10 best_pop=2440 best_fit=2460
+it   62 [cross]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=10 best_pop=2440 best_fit=2460
+it   63 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   64 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   65 [mutat]   fit=     3.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=10 best_pop=2440 best_fit=2460
+it   66 [xover] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   67 [xover] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   68 [xover] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   69 [mut] op-error: no code block in LLM response
+it   70 [xover] op-error: no code block in LLM response
+it   71 [mutat] + fit=   290.0 pop=  280 m=(0.45,0.00) cell=(9, 0) | filled=11 best_pop=2440 best_fit=2460
+it   72 [mut] op-error: LLM produced invalid policy: SyntaxError: invalid syntax (<genome>, line 1)
+it   73 [mutat]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=11 best_pop=2440 best_fit=2460
+it   74 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=11 best_pop=2440 best_fit=2460
+it   75 [mutat]   fit=     4.7 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=11 best_pop=2440 best_fit=2460
+it   76 [cross] + fit=   979.8 pop=  960 m=(0.47,0.27) cell=(9, 5) | filled=12 best_pop=2440 best_fit=2460

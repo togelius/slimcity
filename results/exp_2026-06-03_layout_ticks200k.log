@@ -1,0 +1,6 @@
+policy = layout  params = 3751  sigma0 = 0.5  es = sep_cma_es
+fitness = dense
+archive = 20x20 = 400 cells
+running with 8 worker processes
+running 200 generations, 5 emitters x 20 solutions = 100 evals/gen
+# started 2026-06-03 14:33:29  policy=layout gens=200 save=results/exp_2026-06-03_layout_ticks200k.npz

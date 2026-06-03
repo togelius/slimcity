@@ -1,0 +1,5 @@
+# started 2026-06-03 14:33:23  policy=layout gens=2 save=results/smoke_init.npz
+# init-archive results/exp_2026-06-03_layout_resind_50k.npz
+gen   1/2  filled=   2/400  obj_max=1867.6  obj_mean=1355.43  qd_score=2710.9  (2.1s, gen_max_obj=1867.6)
+gen   2/2  filled=   2/400  obj_max=1867.6  obj_mean=1355.43  qd_score=2710.9  (0.5s, gen_max_obj=1667.5)
+# finished 2026-06-03 14:33:25  wall=2.6s
