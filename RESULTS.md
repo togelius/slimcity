@@ -9,12 +9,12 @@ Best deterministic city grown from a blank map:
 
 | metric                                 | best |
 | -------------------------------------- | ---- |
-| **cityPop (replay)**                   | **1,820** |
-| zones grown                            | **78 R + 1 C + 0 I**    |
-| representation                         | `layout` (direct city evolution) |
+| **cityPop (replay)**                   | **2,120** |
+| zones grown                            | **82 R + 0 C + 1 I**    |
+| representation                         | `layout` warm-start (`cont500`) |
 | total params                           | 3,751 |
 | fitness mode                           | `dense` |
-| archive                                | 40 × 40 (`exp_2026-06-03_layout_resind_50k`) |
+| archive                                | 40 × 40 (`exp_2026-06-03_layout_resind_50k_cont500`) |
 
 The previous best — `tape@600` with 1,120 cityPop — held for the
 overnight batch and was beaten by the layout-evolution experiment
@@ -43,7 +43,9 @@ Best `cityPop` per representation (with the deterministic engine):
 | `rich_deepconv` (16,32) varied 40g | 0 |   104.2 |    12k  | same |
 | `deepconv` (32,64)         |            0 |    63.3 |    31k  | bonuses only — worse with more params |
 | `mlp` (h=32 / h=64)        |            0 |   10–12 | 78–155k | hopeless in our eval budget |
-| **`layout` `res_ind` 50k** |    **1,820** | 2,526.9 |  3,751  | **50k-eval run on M4; replay #3 elite** |
+| **`layout` cont500 warm-start** |    **2,120** | 2,949.9 |  3,751  | **500g from 50k archive; replay #3/#4 elite** |
+| `layout` ticks200k 20k           |        1,880 | 2,529.5 |  3,751  | 200k stabilization; replay #4 elite |
+| `layout` `res_ind` 50k           |        1,820 | 2,526.9 |  3,751  | 50k-eval run on M4 |
 | `layout` `res_ind` 10k     |        1,680 | 2,255.2 |  3,751  | first layout milestone, see [LAYOUTS.md](LAYOUTS.md) |
 | `layout` `density`         |        1,180 | 2,106.8 |  3,751  | archive collapsed: wires not counted in infra_density |
 
