@@ -30,12 +30,16 @@ Best `cityPop` per representation (with the deterministic engine):
 | `tape` @200                |          640 |   681.8 |    600  | 4 ind zones |
 | `tape` @400                |          800 |   849.3 |  1,200  | 5 ind zones |
 | **`tape` @600**            |    **1,120** | 1,202.2 |  1,800  | **first R + I mix: 8R + 5I** |
+| `tape` @800 res_ind n=3    |          780 | 1,096.3 |  2,400  | 11 R + 4 I — most residential, lower total |
 | `tape` @1000               |          640 | 1,248.6 |  3,000  | regressed; replay differs from stored |
 | `hybrid` (tape+conv)       |          640 |   679.7 |  ~5–11k | matches tape, doesn't beat |
-| `randprefix` 5x (overnight)|          160 |    85.8 |    11k  | 1 ind zone — first net-based growth |
+| `randprefix` 5x            |          160 |    85.8 |    11k  | 1 ind zone — first net-based growth (n=5 only) |
+| `randprefix` n=10          |            0 |  ≤82.9  |    11k  | 10× averaging killed the lucky-seed strategy |
 | `ctxtape`                  |            0 |   181.9 |    330  | bonuses only |
 | `conv`                     |            0 |   118.0 |    740  | bonuses only |
 | `deepconv` (16,32) growth 150g |        0 |   119.8 |    11k  | 347 archive cells, all 0 cityPop |
+| **`rich_deepconv`** (16,32) growth 60g | 0 | 118.9 |    12k  | **rich obs broadens** (353 elites) but doesn't deepen |
+| `rich_deepconv` (16,32) varied 40g | 0 |   104.2 |    12k  | same |
 | `deepconv` (32,64)         |            0 |    63.3 |    31k  | bonuses only — worse with more params |
 | `mlp` (h=32 / h=64)        |            0 |   10–12 | 78–155k | hopeless in our eval budget |
 | **`layout` `res_ind`**     |    **1,680** | 2,255.2 |  3,751  | **direct city evolution, see [LAYOUTS.md](LAYOUTS.md)** |
@@ -46,7 +50,19 @@ Two milestones from the overnight batch:
   more actions and longer game time, industrial zones provide jobs to
   residential zones nearby and *both* grow.
 - **`randprefix` 5x produced the first growth from a net-based policy**
-  (cityPop=160, 1 industrial zone) — small but nonzero.
+  (cityPop=160, 1 industrial zone) — small but nonzero. NOTE: only at
+  `n_evals=5`. With `n_evals=10` the lucky-seed strategy averages out
+  to 0 — averaging selects for robustness over peak performance on
+  rare-success landscapes.
+
+Recent additions to the search machinery (in main but not yet
+benchmarked end-to-end):
+- **`rich_deepconv` policy** with 14-channel obs (R/C/I/infra + power +
+  growth, plus broadcast scalars for cityPop, funds, step, pollution,
+  crime, R/C/I demands). Doubles archive coverage vs basic deepconv
+  but doesn't unlock growth — the closed-loop bottleneck isn't obs alone.
+- **`entropy_count` measure** — prescriptive QD descriptor (tile-type
+  entropy × built count). Queued for the next batch.
 
 ## What works
 

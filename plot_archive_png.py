@@ -140,13 +140,22 @@ def render(
                 fill = _color_for_value(v, vmin, vmax)
             draw.rectangle([x0, y0, x1, y1], fill=fill, outline=(220, 220, 220))
 
-    # Axis labels
+    # Axis labels — pull from metadata if present
+    measures_mode = str(d["measures_mode"]) if "measures_mode" in d.files else "road_ind"
+    AXIS_LABELS = {
+        "road_ind":      ("road_frac (0 → 1)", "ind_share (0 → 1)"),
+        "res_ind":       ("res_share (0 → 1)", "ind_share (0 → 1)"),
+        "density":       ("built_density (0 → 1)", "infra_density (0 → 1)"),
+        "entropy_count": ("tile_entropy (0 → 1)", "built_count (0 → 1)"),
+    }
+    x_label, y_label = AXIS_LABELS.get(measures_mode,
+                                       (f"m0 ({measures_mode})", f"m1 ({measures_mode})"))
     draw.text(
         (grid_x0, grid_y1 + 8),
-        "road_frac (0 → 1)", fill=(0, 0, 0), font=font_mid,
+        x_label, fill=(0, 0, 0), font=font_mid,
     )
     # Rotated y label: draw vertically character-by-character
-    label = "ind_share (0 → 1)"
+    label = y_label
     cy = grid_y0 + grid_px_h // 2 - len(label) * 7 // 2
     for ch in label:
         draw.text((grid_x0 - 28, cy), ch, fill=(0, 0, 0), font=font_mid)

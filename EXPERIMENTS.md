@@ -146,6 +146,53 @@ With richer measures (e.g. discretized R/C/I shares), tape might fill
 more cells without changing the peak. The non-trivial insight is that
 adjacency in θ-space does NOT predict adjacency in measure-space.
 
+## 2026-06-02 — Long randprefix runs with n_evals=10
+
+Hypothesis: averaging fitness over 10 random scaffold seeds gives CMA-ES
+a smoother gradient, leading to more robust policies. Three configs.
+
+| config                                | evals  | wall   | best obj | cityPop | insight |
+| ------------------------------------- | -----: | -----: | -------: | ------: | ------- |
+| `randprefix` 50+(16,32)@200 n=10 25g  |  5,000 | 16916s |     82.9 |       0 | Worse than n=5 — 10x averaging kills the lucky-seed strategy that previously hit cityPop=160. |
+| `randprefix` 30+(8,16)@300 n=10 25g   |  5,000 | 15784s |     80.5 |       0 | Same — averaging selects for robustness over peak performance. |
+| `randprefix` 100+(16,32)@400 n=10 15g |  3,000 | (~6h)  |   pending| pending | Bigger prefix, longer rollout. |
+
+Surprising finding: **heavier averaging hurts on a rare-success
+landscape.** When the underlying policy works only 1 in N attempts,
+averaging over more attempts dilutes the signal. n=5 was probably the
+sweet spot. The next-up runs should drop back to n=3 or n=5.
+
+## 2026-06-02 — Rich observations for closed-loop nets
+
+Hypothesis: the 4-channel binary obs is too impoverished. Built
+`RichDeepConvPolicy` with 14-channel obs:
+  - 6 spatial channels: R, C, I, infra, **power**, **growth**
+  - 8 broadcast scalars: cityPop, funds, step_frac, pollution, crime,
+    R/C/I demands (from `engine.getDemands()`)
+
+12,452 params at `channels=(16,32)` — only 14% more than basic DeepConv.
+
+| config                                    | evals | wall   | best obj | cityPop | elites | insight |
+| ----------------------------------------- | ----: | -----: | -------: | ------: | -----: | ------- |
+| `rich_deepconv` (16,32) growth 60g res_ind|  6,000 |  7898s |    118.9 |       0 |    353 | **Rich obs alone doesn't unlock growth.** But archive coverage 6× larger than basic deepconv. |
+| `rich_deepconv` (16,32) varied 40g res_ind|  4,000 |  4968s |    104.2 |       0 |    181 | Simpler fitness, same story. |
+| `rich_deepconv` (8,16) growth 80g res_ind | 8,000 | pending| pending  | pending | pending| Smaller net + more gens. |
+
+Verdict: richer obs helps the policy be **more diverse** (4–6× more
+archive cells filled than basic deepconv) but still can't grow a single
+zone. So obs is **not** the only bottleneck — the closed-loop nets still
+fail at the joint coordination problem, even with full visibility.
+
+Remaining suspects:
+- Zero-init argmax degeneracy is still there at θ=0
+- Single-tile placement may be too granular
+- The fitness landscape's "find 4 adjacent things at once" structure
+  defeats gradient-based search regardless of obs richness
+
+Next: try **entropy_count** as a *curriculum* descriptor that nudges
+search toward "diverse, dense" — the regime where viable cities live.
+Queued via LaunchAgent for after current batches finish.
+
 ## How to add a row
 
 When you launch a long run, append a row here with the same shape.
