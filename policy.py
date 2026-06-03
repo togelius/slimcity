@@ -835,16 +835,121 @@ class RichDeepConvPolicy:
         return tool, wx, wy
 
 
+# ---------------------------------------------------------------------------
+# RichHybridPolicy: HybridPolicy but the net half is RichDeepConvPolicy.
+# Open-loop tape prefix (carpet-bomb the bootstrap) + a closed-loop net
+# with FULL visibility (power coverage, growth state, cityPop, funds, demand)
+# for the tail. This is the natural composition of our two most successful
+# directions: tape's structural advantage + rich obs's perceptual advantage.
+# ---------------------------------------------------------------------------
+
+class RichHybridPolicy:
+    SIGMA0 = 0.3
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, n_tape: int = 50, n_actions: int = 100,
+                 channels: tuple[int, ...] = (16, 32)):
+        self.n_tape = n_tape
+        self.n_actions = n_actions
+        self.channels = tuple(channels)
+        self.tape = ActionTape(n_actions=n_tape)
+        # The rich net needs to know total n_actions so step_idx/n_actions
+        # is correctly normalized in encode_obs_rich.
+        self.net = RichDeepConvPolicy(n_actions=n_actions, channels=channels)
+        self.step_idx = 0
+
+    @classmethod
+    def param_count(cls, n_tape: int = 50, n_actions: int = 100,
+                    channels: tuple[int, ...] = (16, 32)) -> int:
+        return (
+            ActionTape.param_count(n_actions=n_tape)
+            + RichDeepConvPolicy.param_count(n_actions=n_actions, channels=channels)
+        )
+
+    def set_params(self, theta: np.ndarray) -> None:
+        n_tape_params = self.n_tape * 3
+        self.tape.set_params(theta[:n_tape_params])
+        self.net.set_params(theta[n_tape_params:])
+
+    def get_params(self) -> np.ndarray:
+        return np.concatenate([self.tape.get_params(), self.net.get_params()]).astype(np.float32)
+
+    def reset(self, seed=None) -> None:
+        self.step_idx = 0
+        self.tape.reset()
+        self.net.reset()
+
+    def act(self, tile_map, engine=None, tile_map_raw=None):
+        if self.step_idx < self.n_tape:
+            self.step_idx += 1
+            self.net.step_idx = self.step_idx   # keep net's idea of "progress"
+            return self.tape.act(tile_map)
+        self.step_idx += 1
+        return self.net.act(tile_map, engine=engine, tile_map_raw=tile_map_raw)
+
+
+# ---------------------------------------------------------------------------
+# RichRandomPrefixPolicy: RandomPrefixPolicy with a RichDeepConvPolicy tail.
+# The random prefix scaffolds; the rich-obs net reacts with full state.
+# Combine with --n-evals 5 for noise smoothing.
+# ---------------------------------------------------------------------------
+
+class RichRandomPrefixPolicy:
+    SIGMA0 = 0.2
+    RECOMMENDED_ES = "sep_cma_es"
+
+    def __init__(self, n_random: int = 50, n_actions: int = 100,
+                 channels: tuple[int, ...] = (16, 32)):
+        self.n_random = n_random
+        self.n_actions = n_actions
+        self.channels = tuple(channels)
+        self.net = RichDeepConvPolicy(n_actions=n_actions, channels=channels)
+        self.step_idx = 0
+        self._rng: np.random.Generator | None = None
+
+    @classmethod
+    def param_count(cls, n_random: int = 50, n_actions: int = 100,
+                    channels: tuple[int, ...] = (16, 32)) -> int:
+        return RichDeepConvPolicy.param_count(n_actions=n_actions, channels=channels)
+
+    def set_params(self, theta: np.ndarray) -> None:
+        self.net.set_params(theta)
+
+    def get_params(self) -> np.ndarray:
+        return self.net.get_params()
+
+    def reset(self, seed=None) -> None:
+        self.step_idx = 0
+        self.net.reset()
+        self._rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+
+    def act(self, tile_map, engine=None, tile_map_raw=None):
+        if self.step_idx < self.n_random:
+            self.step_idx += 1
+            self.net.step_idx = self.step_idx
+            tools, weights = zip(*_RANDOM_PREFIX_POOL)
+            p = np.array(weights, dtype=np.float64)
+            p = p / p.sum()
+            tool = int(self._rng.choice(tools, p=p))
+            wx = int(self._rng.integers(0, WORLD_W))
+            wy = int(self._rng.integers(0, WORLD_H))
+            return tool, wx, wy
+        self.step_idx += 1
+        return self.net.act(tile_map, engine=engine, tile_map_raw=tile_map_raw)
+
+
 POLICY_REGISTRY = {
-    "conv":         ConvPolicy,
-    "tape":         ActionTape,
-    "ctxtape":      ContextualTape,
-    "mlp":          MLPPolicy,
-    "deepconv":     DeepConvPolicy,
-    "rich_deepconv": RichDeepConvPolicy,
-    "hybrid":       HybridPolicy,
-    "randprefix":   RandomPrefixPolicy,
-    "layout":       LayoutGenome,
+    "conv":            ConvPolicy,
+    "tape":            ActionTape,
+    "ctxtape":         ContextualTape,
+    "mlp":             MLPPolicy,
+    "deepconv":        DeepConvPolicy,
+    "rich_deepconv":   RichDeepConvPolicy,
+    "hybrid":          HybridPolicy,
+    "rich_hybrid":     RichHybridPolicy,
+    "randprefix":      RandomPrefixPolicy,
+    "rich_randprefix": RichRandomPrefixPolicy,
+    "layout":          LayoutGenome,
 }
 
 

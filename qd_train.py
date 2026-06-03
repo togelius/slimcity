@@ -169,6 +169,25 @@ def main():
             "n_actions": args.n_actions,
             "channels": tuple(int(c) for c in args.policy_channels.split(",")),
         }
+    elif args.policy == "rich_hybrid":
+        policy_kwargs = {
+            "n_tape": args.policy_tape_len,
+            "n_actions": args.n_actions,
+            "channels": tuple(int(c) for c in args.policy_channels.split(",")),
+        }
+        if args.policy_tape_len >= args.n_actions:
+            print(f"warning: --policy-tape-len ({args.policy_tape_len}) >= --n-actions "
+                  f"({args.n_actions}) — the net half will never run", file=sys.stderr)
+    elif args.policy == "rich_randprefix":
+        policy_kwargs = {
+            "n_random": args.policy_random_len,
+            "n_actions": args.n_actions,
+            "channels": tuple(int(c) for c in args.policy_channels.split(",")),
+        }
+        if args.n_evals == 1:
+            print("note: rich_randprefix with --n-evals 1 sees one random scaffold per "
+                  "fitness eval — consider --n-evals 3 or 5 for noise smoothing.",
+                  file=sys.stderr)
     elif args.policy == "hybrid":
         policy_kwargs = {
             "n_tape": args.policy_tape_len,
