@@ -28,6 +28,7 @@ Best `cityPop` per representation (with the deterministic engine):
 | -------------------------- | -----------: | ------: | ------: | ----- |
 | `tape` @100                |          480 |   508.9 |    300  | 3 ind zones |
 | `tape` @200                |          640 |   681.8 |    600  | 4 ind zones |
+| `tape` @300 growth ec      |          660 |   701.2 |    900  | **R+I mix at only 300 actions** (entropy_count curriculum) |
 | `tape` @400                |          800 |   849.3 |  1,200  | 5 ind zones |
 | **`tape` @600**            |    **1,120** | 1,202.2 |  1,800  | **first R + I mix: 8R + 5I** |
 | `tape` @800 res_ind n=3    |          780 | 1,096.3 |  2,400  | 11 R + 4 I — most residential, lower total |

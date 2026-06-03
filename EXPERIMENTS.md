@@ -193,6 +193,33 @@ Next: try **entropy_count** as a *curriculum* descriptor that nudges
 search toward "diverse, dense" — the regime where viable cities live.
 Queued via LaunchAgent for after current batches finish.
 
+## 2026-06-03 — entropy_count measures (overnight via LaunchAgent)
+
+Four runs queued via a sentinel+LaunchAgent setup; all finished overnight
+between 00:56 and 04:45.
+
+| config                                          | evals | wall | best | cityPop | R/C/I | elites | insight |
+| ----------------------------------------------- | ----: | ---: | ---: | ------: | ----- | -----: | ------- |
+| `rich_deepconv` (16,32) growth 80g              | 8,000 | 4263s| 119.9|       0 | 0/0/0 |   377  | Coverage broadens further; peak unchanged from res_ind run. |
+| `rich_deepconv` (16,32) **pop** 80g             | 8,000 | 4271s|   0.0|       0 | 0/0/0 |   306  | **Every elite has fitness=0.** Diverse placements but no growth — perfect illustration of why dense fitness is necessary. |
+| **`tape@300` growth**                           | 5,000 | 1299s| **701.2** | **660** | **1/0/4** | 264 | **First time tape@300 grew residential** — half the actions of the prior tape@600 milestone. |
+| `rich_deepconv` (8,16) growth 120g              |12,000 | 3929s| 118.9|       0 | 0/0/0 |   356  | More gens, smaller net — same plateau. |
+
+Two takeaways:
+- The **curriculum descriptor works as intended** — archives spread broadly
+  across the (entropy, count) plane, with peaks in the high-entropy
+  mid-count region (diverse, dense placements). Bottom-left and top-right
+  are correctly sparse.
+- **It still doesn't unlock net-based growth.** Best `rich_deepconv` is
+  still 118 (bonus-only). The bottleneck for closed-loop nets is not the
+  measures, not the obs, not the fitness shape — there's something
+  structural we haven't found yet (likely the joint-coordination problem
+  + argmax decode degeneracy).
+- **Tape gained from the curriculum.** With 300 actions and growth
+  fitness, tape now hits cityPop=660 (R+I mix), vs the prior 480 ceiling
+  at the same action budget. The entropy measure may be pushing tape
+  toward diverse early-game seeds.
+
 ## How to add a row
 
 When you launch a long run, append a row here with the same shape.
