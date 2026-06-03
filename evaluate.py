@@ -46,11 +46,18 @@ def tile_descriptors(tile_map: np.ndarray,
             built_density = (any built) / total tiles.
             infra_density = (road+wire+plant) / total tiles.
             Captures sprawl vs compactness independent of zone mix.
+        entropy_count — (type_entropy, built_count_norm)
+            Prescriptive / curriculum descriptor. Nudges search toward
+            policies that place LOTS of DIFFERENT things — the regime
+            where city growth becomes possible. Entropy is Shannon over
+            6 tile categories (R, C, I, road, wire, plant), normalized
+            to [0, 1]. Count is total built tiles normalized to [0, 1].
     """
     is_res = (tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])
     is_com = (tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])
     is_ind = (tile_map >= IND_RANGE[0]) & (tile_map <= IND_RANGE[1])
     is_road = (tile_map >= ROAD_RANGE[0]) & (tile_map <= ROAD_RANGE[1])
+    is_wire_only = (tile_map >= 208) & (tile_map <= 222)
     is_plant = np.isin(tile_map, list(PLANT_TILES))
 
     built = is_res | is_com | is_ind | is_road | is_plant
@@ -59,9 +66,12 @@ def tile_descriptors(tile_map: np.ndarray,
     n_road = int(is_road.sum())
     n_zone = int(zoned.sum())
     n_res = int(is_res.sum())
+    n_com = int(is_com.sum())
     n_ind = int(is_ind.sum())
+    n_wire = int(is_wire_only.sum())
+    n_plant = int(is_plant.sum())
     n_total = int(tile_map.size)
-    n_infra = n_road + int(is_plant.sum())
+    n_infra = n_road + n_plant
 
     if mode == "road_ind":
         m0 = n_road / n_built if n_built > 0 else 0.0
@@ -72,6 +82,24 @@ def tile_descriptors(tile_map: np.ndarray,
     elif mode == "density":
         m0 = n_built / n_total
         m1 = n_infra / n_total
+    elif mode == "entropy_count":
+        # Shannon entropy over six tile categories. ROAD_RANGE (64-206) and
+        # wire-only (208-222) don't overlap, so we count them independently.
+        counts = np.array(
+            [n_res, n_com, n_ind, n_road, n_wire, n_plant],
+            dtype=np.float64,
+        )
+        total = counts.sum()
+        if total > 0:
+            probs = counts[counts > 0] / total
+            H = float(-(probs * np.log(probs)).sum())
+            max_H = float(np.log(6.0))     # 6 categories
+            m0 = H / max_H
+        else:
+            m0 = 0.0
+        # Normalize tile count. 2000 is an "overflowing the map" upper bound;
+        # successful tape elites land around 200-800. Clamp to [0, 1].
+        m1 = min(n_built / 2000.0, 1.0)
     else:
         raise ValueError(f"unknown measures mode: {mode!r}")
     return float(m0), float(m1)

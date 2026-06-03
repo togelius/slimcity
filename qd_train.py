@@ -149,7 +149,7 @@ def main():
     ap.add_argument("--archive-dims", type=str, default="20,20",
                     help="GridArchive dims, comma-separated (e.g. 40,40 for 1600 cells)")
     ap.add_argument("--measures", type=str, default="road_ind",
-                    choices=["road_ind", "res_ind", "density"],
+                    choices=["road_ind", "res_ind", "density", "entropy_count"],
                     help="QD descriptor pair (see evaluate.tile_descriptors)")
     ap.add_argument("--save", type=str, default="archive.npz")
     args = ap.parse_args()
