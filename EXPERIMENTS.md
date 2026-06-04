@@ -295,6 +295,42 @@ the action-by-action problem (evolve the city directly) beats *solving*
 it; this batch shows the action-by-action problem is at least making
 real progress when given rich obs.
 
+## 2026-06-04 — Coverage-boosting descriptors (auto-range + tool_spread)
+
+Goal: increase QD coverage for the high-peak methods (tape) without
+losing the peak. Three tape@600 runs, all 40×40 archive, 50 gens.
+
+| config | measures | archive bounds | elites | obj_max | replay cityPop | insight |
+| ------ | -------- | -------------- | -----: | ------: | -------------: | ------- |
+| baseline (overnight) | road_ind | [0,1]² default | 33 | 1202 | 1120 | tape pinned to road_frac=0 column |
+| **road_ind auto-ranged** | road_ind | envelope of baseline + 10% | **466** | 1202 | **1120** | **14× coverage, peak preserved** |
+| baseline (longer) | res_ind | [0,1]² default | 196 | 1202 | 1120 | |
+| res_ind auto-ranged | res_ind | envelope + 10% | 394 | 995 | 920 | 2× coverage but peak regressed (search variance — narrow bounds shifted CMA-ME dynamics) |
+| tool_spread | tool_spread | [0,1]² | **29** | 1204 | 1120 | **behavioral measure failed to spread** |
+
+Findings:
+- **Auto-ranging the archive to the empirical envelope is the single
+  biggest coverage lever.** road_ind went 33 → 466 elites (14×) with
+  the peak fully preserved. The default [0,1]² grid was wasting ~98%
+  of its cells on regions no tape policy can reach.
+- **Auto-range can perturb the peak** (res_ind dropped 1120 → 920).
+  Narrowing the bounds changes which cells emitters compete in, so the
+  CMA-ME dynamics shift. Run it twice or warm-start from the prior
+  best elite (`--init-archive`) to protect the peak.
+- **tool_spread (behavioral measure) did NOT spread tape.** Only 29
+  cells filled. The hypothesis was that decoupling measures from
+  fitness would give tape room to vary; in practice an evolved tape
+  converges to a characteristic tool-histogram + spatial signature,
+  and CMA-ME pushing for fitness collapses behavioral diversity. The
+  decoupling idea may work better for policies with intrinsically more
+  behavioral variety (closed-loop nets), not for a fitness-converged
+  fixed sequence.
+
+Practical recommendation for future runs: use
+`--archive-ranges-from <prior_archive.npz>` to focus resolution, and
+pair with `--init-archive <same>.npz` to keep the known peak. See
+`docs/desc_roadind_zoomed.png` (auto-zoomed) for the 466-elite spread.
+
 ## How to add a row
 
 When you launch a long run, append a row here with the same shape.
