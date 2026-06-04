@@ -9,8 +9,8 @@ For the layout deep-dive, see `LAYOUTS.md`.
 
 | family | what evolves | typical params | best replay cityPop | typical wall time |
 |---|---|---:|---:|---:|
-| **Layout evolution** | The city itself (categorical grid + tax) | 3,751 | **1,680** (50k evals: 1,820) | **11 min** |
-| **ELM** (LLM-mutated program-style) | Categorical layouts + tax, mutated by an LLM | (same encoding) | **1,792** | hours of LLM time |
+| **Layout evolution** | The city itself (categorical 30×25 grid + tax) | 3,751 | **1,680** (50k evals: 1,820) | **11 min** |
+| **ELM** (code-genome) | **Python source code** for `act(obs, state)` (a closed-loop policy), mutated/crossed by Claude | N/A (tokens) | **1,792** | hundreds of LLM calls |
 | **Open-loop ActionTape** | A fixed sequence of `(tool, x, y)` triples | 300–3,000 | 1,120 (tape@600) | ~1 h |
 | **Hybrid** (tape + net) | Tape prefix + closed-loop net tail | 5k–13k | 740 (rich_hybrid@500) | ~10 h |
 | **Closed-loop ConvPolicy / DeepConv / MLP** | A single network from obs → action | 0.7k–155k | **0** | hours, scaled with depth |
@@ -24,7 +24,7 @@ Replay-verified `cityPop`, deterministic engine:
 | rank | approach | cityPop | R/C/I | params | wall (8w on M4) | notes |
 |---:|---|---:|---|---:|---:|---|
 | 1 | **`layout` res_ind 50k evals** | **1,820** | 78/1/0 | 3,751 | ~37 min | replay #3 of stored top-3 |
-| 2 | **ELM (sonnet-mutator, 148 iters)** | **1,792** | (heavy R) | 3,751 | hours of LLM time | best_fit=1823 in log |
+| 2 | **ELM (Claude as mutator, 148 iters)** | **1,792** | (heavy R) | N/A — Python source | hundreds of API calls | **closed-loop policy in code form** — beats every CMA-ES-trained net by 5× |
 | 3 | `layout` res_ind 10k evals | 1,680 | 53/2/0 | 3,751 | 11 min | first layout milestone |
 | 4 | `tape` @600 varied | 1,120 | 8/0/5 | 1,800 | overnight | first R+I mix, policy-based |
 | 5 | `layout` density | 1,180 | 59/0/0 | 3,751 | 33 min | archive collapsed |
@@ -39,7 +39,12 @@ Replay-verified `cityPop`, deterministic engine:
 | ~ | `randprefix` n=10 | 0 | 0/0/0 | 11k | 4.5 h | over-averaging killed lucky-seed |
 | ~ | every closed-loop net without scaffolding | **0** | 0/0/0 | 0.7k–155k | hours | bonuses only |
 
-**Headline**: directly evolving the *city* beats evolving the *placement policy* by ~60%. The two families that get cityPop > 1,500 (layout-CMA-ES and ELM) both encode the city itself; everything that has to *play the simulator action-by-action* tops out around 1,120 (tape@600).
+**Headline**: two very different things both reach cityPop ≈ 1,800:
+
+- **Layout-CMA-ES** (1,820) bypasses the action-by-action problem entirely by encoding the city directly.
+- **ELM** (1,792) confronts the action-by-action problem head-on — same closed-loop cadence as our failing nets — but uses Claude as the variation operator on **Python source code**. The LLM's prior on what good code looks like turns out to outperform CMA-ES on the same task that produced cityPop=0 for every CMA-ES-trained net.
+
+Everything that uses CMA-ES on a parametric policy tops out around 1,120 (tape@600). The dramatic gap between ELM and the CMA-ES nets — both are closed-loop, both decide one tile at a time — strongly suggests **the bottleneck for the CMA-ES nets was the search algorithm + parameterization, not the closed-loop framing itself**.
 
 ## Archive coverage — different story
 
@@ -121,11 +126,11 @@ Plotting params (log scale) vs best replay cityPop, three regimes:
 
 ## What works (final pattern)
 
-1. **Encoding the artifact beats encoding the process.** Layout / ELM directly encode the city; CMA-ES finds good cities quickly. Policy approaches have to *play the simulator action-by-action* and inherit all the granularity / sparsity problems.
-2. **Scaffolding beats from-scratch.** Tape works because it carpet-bombs; randprefix works (a little) because random placements happen to be a scaffold; hybrid works (matches tape) because tape provides scaffolding for the net half.
-3. **Rich obs gives nets visibility, not victory.** They went from cityPop=0 → cityPop=360–740 with rich obs, but still below scaffold-free open-loop tape. The structural problem (one-tile-at-a-time + sparse rewards + argmax decode) survives every perceptual upgrade.
+1. **Two paths to the top — both bypass CMA-ES + dense vectors.** Layout-CMA-ES wins by encoding the artifact, not the process. ELM wins by keeping the closed-loop framing but using an LLM-mutator over **code** instead of CMA-ES over a dense parameter vector. Tape (pure CMA-ES on a dense vector) is third, ~30% behind both.
+2. **Scaffolding beats from-scratch (for CMA-ES policies).** Tape works because it carpet-bombs; randprefix works (a little) because random placements happen to be a scaffold; hybrid matches tape because tape provides scaffolding for the net half.
+3. **Rich obs gives nets visibility, not victory.** They went from cityPop=0 → cityPop=360–740 with rich obs, but still below scaffold-free open-loop tape. The structural problem (one-tile-at-a-time + sparse rewards + argmax decode under CMA-ES) survives every perceptual upgrade — until you swap CMA-ES + nets out for an LLM-mutator + code, at which point closed-loop suddenly works (ELM 1,792).
 4. **Curriculum descriptors push search toward viable regimes.** `entropy_count` got tape@300 to find R+I where it previously couldn't.
-5. **Dense fitness is mandatory for any closed-loop search.** `pop` alone produces 0 for every parametric net.
+5. **Dense fitness is mandatory for any closed-loop CMA-ES search.** `pop` alone produces 0 for every parametric net.
 
 ## What doesn't work
 
@@ -143,9 +148,10 @@ Plotting params (log scale) vs best replay cityPop, three regimes:
 ## File map (for collaborators)
 
 - `slimcity.py` — Python wrapper for the SWIG'd C++ engine
-- `policy.py` — all policy classes + `make_policy()` factory + registry
+- `policy.py` — all parametric policy classes + `make_policy()` factory + registry
 - `evaluate.py` — `evaluate(theta, ...)` runs one or N averaged episodes
-- `qd_train.py` — CMA-ME loop (+ now supports `--init-archive` warm-start)
+- `qd_train.py` — CMA-ME loop (also supports `--init-archive` warm-start, used heavily by the layout work)
+- `elm/` — **ELM (code-genome MAP-Elites)**: separate harness where the genome is Python source for `act(obs, state)` and the variation operator is Claude. `elm/elm_train.py` is the driver; `elm/sandbox.py` defines the restricted execution environment and primitives; `elm/operator.py` has `LLMOperator` + `MockOperator`; `elm/seeds.py` has hand-written starter policies; `elm/archive.py` mirrors the QD archive on the CMA-ES side. See `elm/README.md`.
 - `record.py` — render a policy rollout as an animated GIF
 - `plot_archive_png.py` — heatmap of an `.npz` archive (auto-detects measures)
 - `perturb_study.py` — neighborhood analysis around the best elite of an archive
