@@ -71,14 +71,20 @@ def render(
     cell_size: int | None = None,
     grid_w: int | None = None,
     grid_h: int | None = None,
+    auto_zoom: bool = False,
+    zoom_pad: float = 0.05,
 ) -> None:
     d = np.load(archive_path, allow_pickle=True)
-    objs = d["objectives"]
+    # qd_train uses 'objectives'; ELM uses 'fitness'. Handle both.
+    objs = d["objectives"] if "objectives" in d.files else d["fitness"]
     measures = d["measures"]
     # Read grid_dims from metadata if available; fall back to 20x20.
     if grid_w is None or grid_h is None:
         if "grid_dims" in d.files:
             gd = d["grid_dims"]
+            grid_w, grid_h = int(gd[0]), int(gd[1])
+        elif "dims" in d.files:  # ELM
+            gd = d["dims"]
             grid_w, grid_h = int(gd[0]), int(gd[1])
         else:
             grid_w, grid_h = 20, 20
@@ -86,11 +92,33 @@ def render(
     if cell_size is None:
         cell_size = max(8, min(24, 480 // max(grid_w, grid_h)))
 
-    # Bucket elites into a 20x20 grid (matches GridArchive in qd_train.py).
+    # --auto-zoom: rebin within the empirical envelope of measures.
+    # Multiplies effective resolution wherever elites actually landed.
+    if auto_zoom and len(measures) > 0:
+        m_arr = np.asarray(measures, dtype=np.float64)
+        m0_lo, m0_hi = float(m_arr[:, 0].min()), float(m_arr[:, 0].max())
+        m1_lo, m1_hi = float(m_arr[:, 1].min()), float(m_arr[:, 1].max())
+        # Pad so points at the edges aren't snapped to cell boundaries.
+        m0_pad = (m0_hi - m0_lo) * zoom_pad + 1e-9
+        m1_pad = (m1_hi - m1_lo) * zoom_pad + 1e-9
+        m0_lo -= m0_pad; m0_hi += m0_pad
+        m1_lo -= m1_pad; m1_hi += m1_pad
+        # If everything's in a single point, fall back to default [0,1].
+        if m0_hi - m0_lo < 1e-6: m0_lo, m0_hi = 0.0, 1.0
+        if m1_hi - m1_lo < 1e-6: m1_lo, m1_hi = 0.0, 1.0
+    else:
+        m0_lo, m0_hi, m1_lo, m1_hi = 0.0, 1.0, 0.0, 1.0
+
+    def to_cell(m0, m1):
+        x = (m0 - m0_lo) / (m0_hi - m0_lo)
+        y = (m1 - m1_lo) / (m1_hi - m1_lo)
+        ix = min(max(int(x * grid_w), 0), grid_w - 1)
+        iy = min(max(int(y * grid_h), 0), grid_h - 1)
+        return ix, iy
+
     grid = np.full((grid_h, grid_w), -np.inf, dtype=np.float32)
     for o, m in zip(objs, measures):
-        ix = min(int(m[0] * grid_w), grid_w - 1)
-        iy = min(int(m[1] * grid_h), grid_h - 1)
+        ix, iy = to_cell(float(m[0]), float(m[1]))
         if o > grid[iy, ix]:
             grid[iy, ix] = o
 
@@ -162,10 +190,11 @@ def render(
         cy += 12
 
     # Tick marks (just 0 and 1 corners)
-    draw.text((grid_x0 - 4, grid_y1 + 2),  "0.0", fill=(80, 80, 80), font=font_small)
-    draw.text((grid_x1 - 18, grid_y1 + 2), "1.0", fill=(80, 80, 80), font=font_small)
-    draw.text((grid_x0 - 32, grid_y1 - 8), "0.0", fill=(80, 80, 80), font=font_small)
-    draw.text((grid_x0 - 32, grid_y0 - 4), "1.0", fill=(80, 80, 80), font=font_small)
+    # Use the actual envelope (auto-zoom changes this; default mode shows 0..1)
+    draw.text((grid_x0 - 4, grid_y1 + 2),  f"{m0_lo:.2f}", fill=(80, 80, 80), font=font_small)
+    draw.text((grid_x1 - 22, grid_y1 + 2), f"{m0_hi:.2f}", fill=(80, 80, 80), font=font_small)
+    draw.text((grid_x0 - 36, grid_y1 - 8), f"{m1_lo:.2f}", fill=(80, 80, 80), font=font_small)
+    draw.text((grid_x0 - 36, grid_y0 - 4), f"{m1_hi:.2f}", fill=(80, 80, 80), font=font_small)
 
     # Colorbar
     cbar_x0 = grid_x1 + cbar_pad
@@ -196,8 +225,14 @@ def main():
     ap.add_argument("archive")
     ap.add_argument("out")
     ap.add_argument("--title", default="")
+    ap.add_argument("--auto-zoom", action="store_true",
+                    help="rebin within the empirical envelope of elites — "
+                         "multiplies effective resolution wherever they live")
+    ap.add_argument("--zoom-pad", type=float, default=0.05,
+                    help="padding around the envelope, as a fraction of its size")
     args = ap.parse_args()
-    render(args.archive, args.out, args.title)
+    render(args.archive, args.out, args.title,
+           auto_zoom=args.auto_zoom, zoom_pad=args.zoom_pad)
     print(f"wrote {args.out}", file=sys.stderr)
 
 
