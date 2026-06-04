@@ -262,6 +262,39 @@ Recipe (system Python 3.9):
   --save results/exp_2026-06-03_layout_resind_50k.npz
 ```
 
+## 2026-06-03 — Rich composite policies (workday batch)
+
+Built RichHybridPolicy and RichRandomPrefixPolicy — both put
+RichDeepConvPolicy (14-channel obs with power coverage, growth state,
+broadcast cityPop/funds/step/pollution/crime/R-C-I-demands) into the
+"tail" net half of the existing composites. Hypothesis: hybrid has been
+matching but not exceeding tape because the net half is blind. Give it
+sight.
+
+| config                                         | params | gens | wall   | obj_max | cityPop | R/C/I | insight |
+| ---------------------------------------------- | -----: | ---: | -----: | ------: | ------: | ----- | ------- |
+| `rich_hybrid` t100+(16,32)@300 growth ec       | 12,752 | 80   |  6.0h  |   682.0 |     640 | 0/0/4 | Matches earlier hybrid, replays exact. |
+| `rich_randprefix` 50+(16,32)@200 n=5 growth ec | 12,452 | 40   |  5.5h  |   131.9 |     360 | 9/0/1 | **First mixed R+I net-only city.** 9 res + 1 ind. |
+| **`rich_hybrid` t200+(16,32)@500 growth ec**   | 12,752 | 50   |  9.9h  | **819.6** | **740** | **4/0/4** | **First closed-loop mixed R+I.** Net half clearly contributing — 4R from net's reactions to tape scaffold. |
+
+Two real milestones:
+- **rich_hybrid_t200_500 → cityPop=740 with 4R + 4I.** First time a
+  policy involving a neural net has produced both residential AND
+  industrial growth. The net half is making productive decisions —
+  not just generating noise on top of tape.
+- **rich_randprefix → 9 residential + 1 industrial.** First time the
+  random-prefix approach produced residential at all. Previous best
+  was 1 industrial (cityPop=160). The richer obs lets the net
+  recognize "this random scaffold needs houses placed near these
+  power lines."
+
+Still behind tape@600's 1120 and well behind layout's 1820, but in a
+fundamentally different way — the closed-loop nets are now playing
+the game, not gaming bonuses. The layout work shows that *bypassing*
+the action-by-action problem (evolve the city directly) beats *solving*
+it; this batch shows the action-by-action problem is at least making
+real progress when given rich obs.
+
 ## How to add a row
 
 When you launch a long run, append a row here with the same shape.

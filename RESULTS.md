@@ -34,6 +34,9 @@ Best `cityPop` per representation (with the deterministic engine):
 | `tape` @800 res_ind n=3    |          780 | 1,096.3 |  2,400  | 11 R + 4 I — most residential, lower total |
 | `tape` @1000               |          640 | 1,248.6 |  3,000  | regressed; replay differs from stored |
 | `hybrid` (tape+conv)       |          640 |   679.7 |  ~5–11k | matches tape, doesn't beat |
+| **`rich_hybrid` t200@500 growth ec** | **740** | **819.6** | **13k** | **first closed-loop mixed R+I (4R + 4I)** — net half clearly contributing |
+| `rich_hybrid` t100@300 growth ec | 640 | 682.0 | 13k | matches non-rich hybrid (ceiling) |
+| `rich_randprefix` 50@200 n=5 growth ec | 360 | 131.9 | 12k | **first net-only mixed R+I**: 9R + 1I — qualitatively new |
 | `randprefix` 5x            |          160 |    85.8 |    11k  | 1 ind zone — first net-based growth (n=5 only) |
 | `randprefix` n=10          |            0 |  ≤82.9  |    11k  | 10× averaging killed the lucky-seed strategy |
 | `ctxtape`                  |            0 |   181.9 |    330  | bonuses only |
