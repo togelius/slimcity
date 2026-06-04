@@ -12,10 +12,15 @@ distributed under the same license — see [LICENSE](LICENSE).
 
 ## For collaborators
 
+- **[SUMMARY.md](SUMMARY.md)** — cross-cutting comparison of every approach
+  family (layout / ELM / tape / hybrid / closed-loop nets / random-prefix).
+  Start here if you want one-page orientation.
 - **[RESULTS.md](RESULTS.md)** — what works, what doesn't, current leaderboard.
 - **[EXPERIMENTS.md](EXPERIMENTS.md)** — chronological log of every training
   run, with config, wall time, replay-verified result, and a one-line
   insight. Append a new row when you launch a long run.
+- **[LAYOUTS.md](LAYOUTS.md)** — deep-dive on the layout-evolution
+  approach (currently the global champion at cityPop ≈ 1,820).
 - All saved archives carry their full config as `.npz` metadata, so any
   result can be reproduced or replayed without runtime args.
 
