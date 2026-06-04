@@ -185,6 +185,10 @@ def main():
                          "tool_spread is behavioral — only meaningful for policies "
                          "that produce a stream of placements (anything but `layout`).")
     ap.add_argument("--save", type=str, default="archive.npz")
+    ap.add_argument("--save-every", type=int, default=0,
+                    help="checkpoint the archive to --save every N generations "
+                         "(0 = only at the end). Enables long runs to be "
+                         "inspected / committed mid-flight.")
     ap.add_argument("--log", type=str, default=None,
                     help="append per-generation stats (default: <save> with .log)")
     ap.add_argument("--init-archive", type=str, default=None,
@@ -361,6 +365,34 @@ def main():
           f"{args.emitters} emitters x {args.batch} solutions = "
           f"{args.emitters * args.batch} evals/gen")
 
+    def save_archive(wall_so_far):
+        data = archive.data()
+        np.savez(
+            args.save,
+            solutions=data["solution"],
+            objectives=data["objective"],
+            measures=data["measures"],
+            grid_dims=np.array(grid_dims, dtype=np.int32),
+            policy=np.array(args.policy),
+            policy_kwargs=np.array(repr(policy_kwargs)),
+            n_actions=np.int32(args.n_actions),
+            ticks_per_action=np.int32(args.ticks_per_action),
+            warmup=np.int32(args.warmup),
+            fitness=np.array(args.fitness),
+            measures_mode=np.array(args.measures),
+            archive_ranges=np.array(archive_ranges, dtype=np.float32),
+            n_evals=np.int32(args.n_evals),
+            episode_seed=np.int32(args.episode_seed),
+            gens=np.int32(args.gens),
+            emitters=np.int32(args.emitters),
+            batch=np.int32(args.batch),
+            sigma0=np.float32(args.sigma0),
+            es=np.array(args.es),
+            init_archive=np.array(init_archive or ""),
+            wall_seconds=np.float32(wall_so_far),
+        )
+        return len(data["objective"])
+
     t_start = time.time()
     for gen in range(args.gens):
         t0 = time.time()
@@ -416,42 +448,23 @@ def main():
             log_fp.write(line + "\n")
             log_fp.flush()
 
+        if args.save_every and (gen + 1) % args.save_every == 0:
+            n = save_archive(time.time() - t_start)
+            ck = f"# checkpoint gen {gen+1}: saved {n} elites to {args.save}"
+            print(ck)
+            if log_fp is not None:
+                log_fp.write(ck + "\n"); log_fp.flush()
+
     wall = time.time() - t_start
     print(f"\ntotal: {wall:.1f}s")
     if log_fp is not None:
         log_fp.write(f"# finished {time.strftime('%Y-%m-%d %H:%M:%S')}  wall={wall:.1f}s\n")
         log_fp.flush()
         log_fp.close()
-    # Save archive contents — ribs 0.8 API. Also store enough metadata that
-    # any consumer (replay scripts, heatmap plotter, collaborator) can decode
-    # the archive without needing the CLI args.
-    data = archive.data()
-    np.savez(
-        args.save,
-        solutions=data["solution"],
-        objectives=data["objective"],
-        measures=data["measures"],
-        # Metadata
-        grid_dims=np.array(grid_dims, dtype=np.int32),
-        policy=np.array(args.policy),
-        policy_kwargs=np.array(repr(policy_kwargs)),
-        n_actions=np.int32(args.n_actions),
-        ticks_per_action=np.int32(args.ticks_per_action),
-        warmup=np.int32(args.warmup),
-        fitness=np.array(args.fitness),
-        measures_mode=np.array(args.measures),
-        archive_ranges=np.array(archive_ranges, dtype=np.float32),
-        n_evals=np.int32(args.n_evals),
-        episode_seed=np.int32(args.episode_seed),
-        gens=np.int32(args.gens),
-        emitters=np.int32(args.emitters),
-        batch=np.int32(args.batch),
-        sigma0=np.float32(args.sigma0),
-        es=np.array(args.es),
-        init_archive=np.array(init_archive or ""),
-        wall_seconds=np.float32(wall),
-    )
-    print(f"saved archive to {args.save} ({len(data['objective'])} elites)")
+    # Save archive contents — ribs 0.8 API. Metadata stored so any consumer
+    # (replay scripts, heatmap plotter, collaborator) can decode without args.
+    n = save_archive(wall)
+    print(f"saved archive to {args.save} ({n} elites)")
 
     if pool is not None:
         pool.close()
