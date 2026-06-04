@@ -106,7 +106,9 @@ def load_init_theta(path: str, n_params: int) -> np.ndarray:
 def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: float,
                     es: str = "sep_cma_es",
                     grid_dims: tuple[int, int] = (20, 20),
-                    x0: np.ndarray | None = None):
+                    x0: np.ndarray | None = None,
+                    ranges: tuple[tuple[float, float], tuple[float, float]] =
+                        ((0.0, 1.0), (0.0, 1.0))):
     if x0 is None:
         x0 = np.zeros(n_params, dtype=np.float32)
     else:
@@ -114,7 +116,8 @@ def build_scheduler(n_params: int, n_emitters: int, batch_size: int, sigma0: flo
     archive = GridArchive(
         solution_dim=n_params,
         dims=list(grid_dims),                     # default 20x20 = 400 archive cells
-        ranges=[(0.0, 1.0), (0.0, 1.0)],          # (road_frac, ind_share)
+        ranges=[(float(ranges[0][0]), float(ranges[0][1])),
+                (float(ranges[1][0]), float(ranges[1][1]))],
         seed=0,
     )
     emitters = [
@@ -177,13 +180,26 @@ def main():
     ap.add_argument("--archive-dims", type=str, default="20,20",
                     help="GridArchive dims, comma-separated (e.g. 40,40 for 1600 cells)")
     ap.add_argument("--measures", type=str, default="road_ind",
-                    choices=["road_ind", "res_ind", "density", "entropy_count"],
-                    help="QD descriptor pair (see evaluate.tile_descriptors)")
+                    choices=["road_ind", "res_ind", "density", "entropy_count", "tool_spread"],
+                    help="QD descriptor pair (see evaluate.tile_descriptors). "
+                         "tool_spread is behavioral — only meaningful for policies "
+                         "that produce a stream of placements (anything but `layout`).")
     ap.add_argument("--save", type=str, default="archive.npz")
     ap.add_argument("--log", type=str, default=None,
                     help="append per-generation stats (default: <save> with .log)")
     ap.add_argument("--init-archive", type=str, default=None,
                     help="warm-start all emitters from the best elite in this .npz")
+    ap.add_argument("--archive-ranges", type=str, default=None,
+                    help="GridArchive ranges as 'm0_lo,m0_hi,m1_lo,m1_hi'. "
+                         "Overrides the default [0,1]x[0,1] — useful when measures "
+                         "live in a small sub-region. Combine with --archive-ranges-from "
+                         "to pull from an existing archive.")
+    ap.add_argument("--archive-ranges-from", type=str, default=None,
+                    help="path to an existing .npz whose measures define the empirical "
+                         "envelope. Use this to refine resolution where elites actually live.")
+    ap.add_argument("--archive-ranges-pad", type=float, default=0.05,
+                    help="when using --archive-ranges-from: padding around the envelope, "
+                         "as a fraction of its size (default 0.05 = 5%)")
     args = ap.parse_args()
 
     # Build policy kwargs based on the chosen policy
@@ -270,6 +286,33 @@ def main():
         x0, init_obj = load_init_theta(init_archive, n_params)
         print(f"init-archive = {init_archive}  best stored obj = {init_obj:.1f}")
 
+    # Resolve archive ranges: explicit --archive-ranges takes priority, then
+    # --archive-ranges-from (compute envelope from an existing archive),
+    # otherwise fall back to the default [0,1]x[0,1].
+    archive_ranges = ((0.0, 1.0), (0.0, 1.0))
+    if args.archive_ranges:
+        parts = [float(x) for x in args.archive_ranges.split(",")]
+        assert len(parts) == 4, "--archive-ranges expects 'm0_lo,m0_hi,m1_lo,m1_hi'"
+        archive_ranges = ((parts[0], parts[1]), (parts[2], parts[3]))
+        print(f"archive ranges = {archive_ranges} (from --archive-ranges)")
+    elif args.archive_ranges_from:
+        try:
+            d_ref = np.load(args.archive_ranges_from, allow_pickle=True)
+        except FileNotFoundError as e:
+            raise SystemExit(f"--archive-ranges-from: {e}")
+        ref_meas = (d_ref["measures"] if "measures" in d_ref.files else None)
+        if ref_meas is None or len(ref_meas) == 0:
+            raise SystemExit(f"{args.archive_ranges_from}: no measures to extract envelope from")
+        m_arr = np.asarray(ref_meas, dtype=np.float64)
+        m0_lo, m0_hi = float(m_arr[:, 0].min()), float(m_arr[:, 0].max())
+        m1_lo, m1_hi = float(m_arr[:, 1].min()), float(m_arr[:, 1].max())
+        m0_pad = (m0_hi - m0_lo) * args.archive_ranges_pad + 1e-9
+        m1_pad = (m1_hi - m1_lo) * args.archive_ranges_pad + 1e-9
+        archive_ranges = ((m0_lo - m0_pad, m0_hi + m0_pad),
+                          (m1_lo - m1_pad, m1_hi + m1_pad))
+        print(f"archive ranges = {archive_ranges} (from {args.archive_ranges_from} envelope "
+              f"+ {args.archive_ranges_pad*100:.0f}% pad)")
+
     scheduler, archive = build_scheduler(
         n_params=n_params,
         n_emitters=args.emitters,
@@ -278,6 +321,7 @@ def main():
         es=args.es,
         grid_dims=grid_dims,
         x0=x0,
+        ranges=archive_ranges,
     )
     print(f"archive = {grid_dims[0]}x{grid_dims[1]} = {grid_dims[0]*grid_dims[1]} cells")
 
@@ -396,6 +440,7 @@ def main():
         warmup=np.int32(args.warmup),
         fitness=np.array(args.fitness),
         measures_mode=np.array(args.measures),
+        archive_ranges=np.array(archive_ranges, dtype=np.float32),
         n_evals=np.int32(args.n_evals),
         episode_seed=np.int32(args.episode_seed),
         gens=np.int32(args.gens),

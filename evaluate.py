@@ -31,7 +31,9 @@ DEFAULT_CITY: str | None = None
 
 
 def tile_descriptors(tile_map: np.ndarray,
-                     mode: str = "road_ind") -> tuple[float, float]:
+                     mode: str = "road_ind",
+                     placements: list | None = None,
+                     n_actions: int | None = None) -> tuple[float, float]:
     """Compute a 2-D QD descriptor from a (H, W) tile-id map.
 
     Modes:
@@ -52,6 +54,18 @@ def tile_descriptors(tile_map: np.ndarray,
             where city growth becomes possible. Entropy is Shannon over
             6 tile categories (R, C, I, road, wire, plant), normalized
             to [0, 1]. Count is total built tiles normalized to [0, 1].
+        tool_spread — (tool_entropy, spatial_spread)  [behavioral]
+            Process-level descriptor based on the policy's ACTION
+            SEQUENCE, not the city it ends with. Decouples measures
+            from fitness — designed to give tape something to vary
+            along that isn't a feature of the grown city.
+              tool_entropy   = Shannon over the histogram of tools
+                               actually called via env.place(...),
+                               normalized by log(20).
+              spatial_spread = mean pairwise euclidean distance between
+                               placement coordinates, normalized to
+                               the map diagonal.
+            Requires `placements` (list of (tool, x, y)) and `n_actions`.
     """
     is_res = (tile_map >= RES_RANGE[0]) & (tile_map <= RES_RANGE[1])
     is_com = (tile_map >= COM_RANGE[0]) & (tile_map <= COM_RANGE[1])
@@ -100,6 +114,31 @@ def tile_descriptors(tile_map: np.ndarray,
         # Normalize tile count. 2000 is an "overflowing the map" upper bound;
         # successful tape elites land around 200-800. Clamp to [0, 1].
         m1 = min(n_built / 2000.0, 1.0)
+    elif mode == "tool_spread":
+        if placements is None:
+            raise ValueError("tool_spread requires `placements` to be passed in")
+        if len(placements) == 0:
+            return 0.0, 0.0
+        tools = np.array([p[0] for p in placements], dtype=np.int32)
+        # Tool entropy
+        counts = np.bincount(tools, minlength=20).astype(np.float64)
+        total = counts.sum()
+        if total > 0:
+            probs = counts[counts > 0] / total
+            H = float(-(probs * np.log(probs)).sum())
+            m0 = H / float(np.log(20.0))
+        else:
+            m0 = 0.0
+        # Spatial spread — std of coords, normalized to map diagonal.
+        # std (not mean pairwise distance) since O(N^2) is too slow for big tapes.
+        xs = np.array([p[1] for p in placements], dtype=np.float64)
+        ys = np.array([p[2] for p in placements], dtype=np.float64)
+        sigma_x = float(np.std(xs)) if len(xs) > 1 else 0.0
+        sigma_y = float(np.std(ys)) if len(ys) > 1 else 0.0
+        diag = float((tile_map.shape[0] ** 2 + tile_map.shape[1] ** 2) ** 0.5)
+        # std caps around (W or H) / 2 for uniform placements; * 2.0 here
+        # squeezes them roughly into [0, 1].
+        m1 = min((sigma_x + sigma_y) / diag * 2.0, 1.0)
     else:
         raise ValueError(f"unknown measures mode: {mode!r}")
     return float(m0), float(m1)
@@ -293,6 +332,7 @@ def _evaluate_once(
     except TypeError:
         policy.reset()
 
+    placements_log: list[tuple[int, int, int]] | None = None
     if getattr(policy, "IS_LAYOUT", False):
         # Layout-evolution mode: the genome IS the city. Build once, tick
         # for `stabilization_ticks` (re-used n_actions × ticks_per_action
@@ -309,6 +349,11 @@ def _evaluate_once(
         wants_engine = "engine" in sig.parameters
         wants_raw = "tile_map_raw" in sig.parameters
 
+        # Track placements only if a measure mode needs them (cheap; skip the
+        # list growth for runs that don't use tool_spread).
+        track_placements = measures_mode in ("tool_spread",)
+        if track_placements:
+            placements_log = []
         for _ in range(n_actions):
             tile_map = env.get_map()
             if wants_engine and wants_raw:
@@ -320,6 +365,8 @@ def _evaluate_once(
             else:
                 tool, wx, wy = policy.act(tile_map)
             env.place(tool, wx, wy)
+            if track_placements:
+                placements_log.append((int(tool), int(wx), int(wy)))
             env.tick(ticks_per_action)
 
     s = env.stats
@@ -348,7 +395,11 @@ def _evaluate_once(
         )
     else:
         fitness = pop_delta
-    measures = tile_descriptors(final_map, mode=measures_mode)
+    placements_arg = placements_log if not getattr(policy, "IS_LAYOUT", False) else None
+    measures = tile_descriptors(
+        final_map, mode=measures_mode,
+        placements=placements_arg, n_actions=n_actions,
+    )
     return EpisodeResult(fitness=fitness, measures=measures, stats_final=s)
 
 
