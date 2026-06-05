@@ -193,14 +193,23 @@ def main():
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--rng-seed", type=int, default=0,
                     help="seed for operator/parent-selection RNG")
+    ap.add_argument("--init-archive", default=None,
+                    help="resume: load an existing ELM .npz archive and keep "
+                         "evolving it (skips re-seeding). Lets a long run "
+                         "survive container restarts by relaunching from its "
+                         "last checkpoint.")
     args = ap.parse_args()
 
     dims = tuple(int(x) for x in args.archive_dims.split(","))
     rng = np.random.default_rng(args.rng_seed)
-    resuming = args.resume and os.path.exists(args.out)
+    # Resume from an explicit --init-archive path, or from --out when --resume
+    # is set; either way continue an existing front instead of re-seeding.
+    init_path = args.init_archive or (
+        args.out if (args.resume and os.path.exists(args.out)) else None)
+    resuming = init_path is not None
     if resuming:
-        archive = MapElitesArchive.load(args.out)
-        dims = archive.dims
+        archive = MapElitesArchive.load(init_path)
+        dims = tuple(int(x) for x in archive.dims)  # int (not np.int64) for json log
     else:
         archive = MapElitesArchive(dims=dims)
 
@@ -279,9 +288,9 @@ def main():
                 except Exception:
                     pass
         start_iter = last_it + 1
-        print(f"  RESUMED from {args.out}: {len(archive.cells)} elites, "
+        print(f"  RESUMED from {init_path}: {len(archive.cells)} elites, "
               f"best_pop={archive.best.city_pop}, continuing at iter {start_iter}")
-        log_gen({"event": "resume", "from": args.out,
+        log_gen({"event": "resume", "from": init_path,
                  "filled": len(archive.cells), "start_iter": start_iter})
     else:
         start_iter = 1
