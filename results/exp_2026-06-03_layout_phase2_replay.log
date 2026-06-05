@@ -1,0 +1,16 @@
+
+results/exp_2026-06-03_layout_ticks200k.npz  elites=22  stored_max=2529.5
+  #1 stored=2529.5 replay=1269.5 cityPop=1140 R=51 C=1 I=0
+  #2 stored=2484.9 replay=1584.9 cityPop=1460 R=56 C=0 I=0
+  #3 stored=2431.4 replay=1911.4 cityPop=1780 R=58 C=1 I=0
+  #4 stored=2331.6 replay=2011.6 cityPop=1880 R=71 C=1 I=0
+  #5 stored=2210.3 replay=1730.3 cityPop=1600 R=61 C=1 I=1
+  best replay cityPop in top-5: 1880
+
+results/exp_2026-06-03_layout_resind_50k_cont500.npz  elites=52  stored_max=2949.9
+  #1 stored=2949.9 replay=1489.9 cityPop=1360 R=60 C=0 I=2
+  #2 stored=2688.6 replay=1468.6 cityPop=1340 R=58 C=0 I=2
+  #3 stored=2669.9 replay=2249.9 cityPop=2120 R=82 C=0 I=1
+  #4 stored=2669.1 replay=2249.1 cityPop=2120 R=68 C=0 I=3
+  #5 stored=2648.6 replay=1648.7 cityPop=1520 R=61 C=0 I=2
+  best replay cityPop in top-5: 2120

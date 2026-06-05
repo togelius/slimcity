@@ -136,7 +136,9 @@ class MapElitesArchive:
     @classmethod
     def load(cls, path: str) -> "MapElitesArchive":
         d = np.load(path, allow_pickle=True)
-        arch = cls(dims=tuple(d["dims"]), ranges=tuple(map(tuple, d["ranges"])))
+        dims = tuple(int(x) for x in d["dims"])
+        ranges = tuple((float(lo), float(hi)) for lo, hi in d["ranges"])
+        arch = cls(dims=dims, ranges=ranges)
         for cell, src, fit, meas, cp, org, it in zip(
             d["cells"], d["sources"], d["fitness"], d["measures"],
             d["city_pop"], d["origin"], d["iteration"],

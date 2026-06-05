@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import multiprocessing as mp
+import os
 import time
 
 import numpy as np
@@ -156,6 +157,9 @@ def main():
     ap.add_argument("--no-sandbox", action="store_true",
                     help="evaluate inline (faster, no timeout protection)")
     ap.add_argument("--out", default="results/elm_archive.npz")
+    ap.add_argument("--resume", action="store_true",
+                    help="resume from an existing --out archive + gen log "
+                         "(skip seeding, continue iteration numbering)")
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--rng-seed", type=int, default=0,
                     help="seed for operator/parent-selection RNG")
@@ -163,7 +167,12 @@ def main():
 
     dims = tuple(int(x) for x in args.archive_dims.split(","))
     rng = np.random.default_rng(args.rng_seed)
-    archive = MapElitesArchive(dims=dims)
+    resuming = args.resume and os.path.exists(args.out)
+    if resuming:
+        archive = MapElitesArchive.load(args.out)
+        dims = archive.dims
+    else:
+        archive = MapElitesArchive(dims=dims)
 
     eval_kwargs = dict(
         n_actions=args.n_actions, ticks_per_action=args.ticks_per_action,
@@ -227,35 +236,55 @@ def main():
              "episode_seed": args.episode_seed, "iters": args.iters})
     print(f"  logging every generation -> {gen_log_path}")
 
-    # ---- seed the archive ----
-    for name in args.seeds.split(","):
-        name = name.strip()
-        if name not in SEEDS:
-            print(f"  ! unknown seed {name!r}, skipping")
-            continue
-        r, spread = evaluate(SEEDS[name])
-        if not r.ok:
-            print(f"  ! seed {name!r} failed: {r.error}")
-            continue
-        imp, cell = archive.add(SEEDS[name], r.fitness, r.measures,
-                                city_pop=r.city_pop, origin="seed",
-                                iteration=-1, render=r.render)
-        log_gen({"event": "eval", "iteration": -1, "origin": "seed",
-                 "name": name, "parents": [], "improved": bool(imp),
-                 "cell": list(cell), "fitness": r.fitness, "measures": list(r.measures),
-                 "city_pop": r.city_pop, "res_pop": r.res_pop, "com_pop": r.com_pop,
-                 "ind_pop": r.ind_pop, "n_errors": r.n_errors, "error": r.error,
-                 "eval_fits": spread, "source": SEEDS[name]})
-        print(f"  seed {name:7s} fitness={r.fitness:8.1f} cityPop={r.city_pop:5d} "
-              f"cell={cell} rolls={spread} {'+' if imp else 'x'}")
-    if not archive.cells:
-        print("no seeds inserted — aborting."); return
-    archive.record_history(0)
+    # ---- seed the archive (skipped when resuming) ----
+    if resuming:
+        # Continue numbering past the last ATTEMPT (gen log records every
+        # iteration, not just improving ones), so iters never duplicate.
+        last_it = max([e.iteration for e in archive.cells.values()] + [0])
+        if os.path.exists(gen_log_path):
+            for line in open(gen_log_path):
+                try:
+                    it_n = json.loads(line).get("iteration")
+                    if isinstance(it_n, int):
+                        last_it = max(last_it, it_n)
+                except Exception:
+                    pass
+        start_iter = last_it + 1
+        print(f"  RESUMED from {args.out}: {len(archive.cells)} elites, "
+              f"best_pop={archive.best.city_pop}, continuing at iter {start_iter}")
+        log_gen({"event": "resume", "from": args.out,
+                 "filled": len(archive.cells), "start_iter": start_iter})
+    else:
+        start_iter = 1
+        for name in args.seeds.split(","):
+            name = name.strip()
+            if name not in SEEDS:
+                print(f"  ! unknown seed {name!r}, skipping")
+                continue
+            r, spread = evaluate(SEEDS[name])
+            if not r.ok:
+                print(f"  ! seed {name!r} failed: {r.error}")
+                continue
+            imp, cell = archive.add(SEEDS[name], r.fitness, r.measures,
+                                    city_pop=r.city_pop, origin="seed",
+                                    iteration=-1, render=r.render)
+            log_gen({"event": "eval", "iteration": -1, "origin": "seed",
+                     "name": name, "parents": [], "improved": bool(imp),
+                     "cell": list(cell), "fitness": r.fitness,
+                     "measures": list(r.measures), "city_pop": r.city_pop,
+                     "res_pop": r.res_pop, "com_pop": r.com_pop,
+                     "ind_pop": r.ind_pop, "n_errors": r.n_errors,
+                     "error": r.error, "eval_fits": spread, "source": SEEDS[name]})
+            print(f"  seed {name:7s} fitness={r.fitness:8.1f} cityPop={r.city_pop:5d} "
+                  f"cell={cell} rolls={spread} {'+' if imp else 'x'}")
+        if not archive.cells:
+            print("no seeds inserted — aborting."); return
+        archive.record_history(0)
 
     # ---- evolve ----
     t0 = time.time()
     n_improved = n_invalid = n_op_err = 0
-    for it in range(1, args.iters + 1):
+    for it in range(start_iter, args.iters + 1):
         do_cross = (len(archive.cells) >= 2 and rng.random() < args.crossover_rate)
         origin = "crossover" if do_cross else "mutate"
         parents = ()
