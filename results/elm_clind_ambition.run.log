@@ -1,0 +1,12 @@
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=cl_ind archive=8x8 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=3 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_clind_ambition_generations.jsonl
+  seed clind_champ fitness=  2623.0 cityPop= 2613 cell=(5, 0, 2) rolls=[2569.7, 2409.7, 2889.7] +
+  killing fully open-loop genomes: max(cf, divergence) <= 0.0
+it    3 [mutat] + fit=   810.8 pop=  800 m=(1.00,0.23,0.17) cell=(7, 1, 1) | filled=2 best_pop=2613 best_fit=2623
+it    1 [mutat] + fit=     4.0 pop=    0 m=(0.02,0.00,0.00) cell=(0, 0, 0) | filled=3 best_pop=2613 best_fit=2623
+it    2 [mutat] + fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=4 best_pop=2613 best_fit=2623
+it    4 [cross] + fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=4 best_pop=2613 best_fit=2623
+it    5 [mutat]   fit=     2.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=4 best_pop=2613 best_fit=2623
+it    6 [mutat] invalid: init() is 36 lines; keep it <= 30 (~20 lines)
