@@ -159,11 +159,21 @@ def main():
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--rng-seed", type=int, default=0,
                     help="seed for operator/parent-selection RNG")
+    ap.add_argument("--init-archive", default=None,
+                    help="resume: load an existing ELM .npz archive and keep "
+                         "evolving it (skips re-seeding). Lets a long run "
+                         "survive container restarts by relaunching from its "
+                         "last checkpoint.")
     args = ap.parse_args()
 
     dims = tuple(int(x) for x in args.archive_dims.split(","))
     rng = np.random.default_rng(args.rng_seed)
-    archive = MapElitesArchive(dims=dims)
+    if args.init_archive:
+        archive = MapElitesArchive.load(args.init_archive)
+        dims = tuple(int(x) for x in archive.dims)  # int (not np.int64) for json log
+        print(f"resumed from {args.init_archive}: {archive.summary()}")
+    else:
+        archive = MapElitesArchive(dims=dims)
 
     eval_kwargs = dict(
         n_actions=args.n_actions, ticks_per_action=args.ticks_per_action,
@@ -227,8 +237,10 @@ def main():
              "episode_seed": args.episode_seed, "iters": args.iters})
     print(f"  logging every generation -> {gen_log_path}")
 
-    # ---- seed the archive ----
-    for name in args.seeds.split(","):
+    # ---- seed the archive (skipped when resuming: the loaded archive already
+    #      carries an evolved front, and re-seeding would only waste evals) ----
+    seed_names = [] if args.init_archive else args.seeds.split(",")
+    for name in seed_names:
         name = name.strip()
         if name not in SEEDS:
             print(f"  ! unknown seed {name!r}, skipping")
