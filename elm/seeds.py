@@ -295,9 +295,12 @@ def act(obs, state):
 '''
 
 
+from elm.seed_clind import SEED_CLIND_CHAMP   # closed-loop champ (~2480) from elm_clind_react
+
 SEEDS = {
     "plan": SEED_PLAN,
     "random": SEED_RANDOM,
+    "clind_champ": SEED_CLIND_CHAMP,      # reactive champion to seed the follow-up run
     "reactive": SEED_REACTIVE,            # closed-loop founder (residential-extend)
     "industrial": SEED_INDUSTRIAL,
     "commercial": SEED_COMMERCIAL,

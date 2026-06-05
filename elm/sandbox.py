@@ -21,6 +21,7 @@ lives in exactly one place.
 
 from __future__ import annotations
 
+import ast
 import builtins as _builtins
 import math
 from dataclasses import dataclass
@@ -131,6 +132,53 @@ def compile_policy(source: str):
     return act
 
 
+# The optional open-loop init() bootstrap must stay small — a few lines that lay
+# a starting base, NOT a full hand-coded city replayed open-loop.
+INIT_MAX_LINES = 30
+
+
+def _func_line_span(source: str, name: str) -> int:
+    """Number of source lines spanned by the top-level function `name` (0 if absent)."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return 0
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            end = getattr(node, "end_lineno", None) or node.lineno
+            return end - node.lineno + 1
+    return 0
+
+
+def compile_genome(source: str):
+    """Compile + exec `source`, returning (act, init).
+
+    `act(obs, state)` is REQUIRED — the per-step closed-loop policy.
+    `init(obs, state)` is OPTIONAL — an open-loop bootstrap that returns a list
+    of (tool, x, y) placements laid down BEFORE act() takes over. It must stay
+    small (<= INIT_MAX_LINES lines) so the genome can't smuggle a full open-loop
+    blueprint in through init.
+    """
+    ns = make_namespace()
+    try:
+        code = compile(source, "<genome>", "exec")
+        exec(code, ns)
+    except Exception as e:  # noqa: BLE001 — surface any compile/exec failure
+        raise CompileError(f"{type(e).__name__}: {e}") from e
+    act = ns.get("act")
+    if not callable(act):
+        raise CompileError("genome must define a callable `act(obs, state)`")
+    init = ns.get("init")
+    if init is not None and not callable(init):
+        raise CompileError("`init` must be callable init(obs, state) if defined")
+    if init is not None:
+        span = _func_line_span(source, "init")
+        if span > INIT_MAX_LINES:
+            raise CompileError(
+                f"init() is {span} lines; keep it <= {INIT_MAX_LINES} (~20 lines)")
+    return act, init
+
+
 def parse_action(action):
     """Validate/normalize a policy's return value.
 
@@ -170,6 +218,19 @@ Define exactly one function:
 It is called `obs.n_steps` times. Between calls the simulation advances, so
 zones you place earlier may grow before later calls. `state` is a dict that
 persists across all steps of one episode (your memory); it starts empty.
+
+You MAY also define an OPTIONAL open-loop bootstrap:
+
+    def init(obs, state):
+        # Runs ONCE, before act(). Return a list of (tool, x, y) placements that
+        # lay a starting base (e.g. a power plant + a few wires/roads/zones).
+        # They are applied one-per-step, then act() takes over for the rest.
+        # Keep it SMALL — at most ~20 lines. It is open-loop scaffolding, not a
+        # full pre-baked city.
+        return [(Tool.COALPOWER, 58, 50), (Tool.WIRE, 58, 49), ...]
+
+Use init() only to bootstrap a powered base so act() has something to react to;
+the real, growing decisions should happen in the closed-loop act().
 
 obs fields:
     obs.tile_map      numpy (100, 120) uint16 array of tile ids (rows=y, cols=x)

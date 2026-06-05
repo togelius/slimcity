@@ -21,7 +21,7 @@ from evaluate import (
     tile_descriptors,
     _dense_bonus, _variety_bonus, _growth_bonus, _adjacency_bonus,
 )
-from elm.sandbox import Obs, compile_policy, parse_action, CompileError
+from elm.sandbox import Obs, compile_genome, parse_action, CompileError
 
 INVALID_FITNESS = -1e9  # genomes that fail to compile never win a cell
 
@@ -130,7 +130,7 @@ def eval_code(
     evaluate._evaluate_once). One episode is ~tens of ms.
     """
     try:
-        act = compile_policy(source)
+        act, init_fn = compile_genome(source)
     except CompileError as e:
         return CodeResult(ok=False, fitness=INVALID_FITNESS, measures=(0.0, 0.0),
                           error=str(e))
@@ -144,6 +144,35 @@ def eval_code(
     n_taken = 0
     n_err = 0
     first_err: str | None = None
+
+    # ---- open-loop init phase ------------------------------------------------
+    # Run the genome's optional init() once: it returns a list of (tool,x,y)
+    # placements that lay a starting base BEFORE the closed-loop act() phase.
+    # Capped to half the action budget so act() always has room to react (and so
+    # a genome can't smuggle a full open-loop city through init).
+    init_actions: list = []
+    if init_fn is not None:
+        s0 = env.stats
+        init_obs = Obs(
+            tile_map=env.get_map(), step=0, n_steps=n_actions,
+            city_pop=s0.city_pop, res_pop=s0.res_pop, com_pop=s0.com_pop,
+            ind_pop=s0.ind_pop, funds=s0.funds,
+            powered_zones=env.engine.poweredZoneCount,
+        )
+        try:
+            out = init_fn(init_obs, state)
+        except TypeError:
+            try:
+                out = init_fn(state)          # tolerate an init(state) signature
+            except Exception as e:  # noqa: BLE001
+                out, n_err = None, n_err + 1
+                first_err = first_err or f"init: {type(e).__name__}: {e}"
+        except Exception as e:  # noqa: BLE001 — a bad init shouldn't kill the run
+            out, n_err = None, n_err + 1
+            first_err = first_err or f"init: {type(e).__name__}: {e}"
+        if out:
+            init_actions = list(out)[: n_actions // 2]
+    init_len = len(init_actions)
 
     # Closed-loopness instrumentation (only when we're descriptor-ing on it).
     want_cl = (measures_mode == CL_IND_MODE)
@@ -161,6 +190,16 @@ def eval_code(
             ind_pop=s.ind_pop, funds=s.funds,
             powered_zones=env.engine.poweredZoneCount,
         )
+
+        # Open-loop init steps: replay the bootstrap, NO reactivity probe (these
+        # are open-loop by design, so they must not count toward cf_sensitivity).
+        if step < init_len:
+            parsed = parse_action(init_actions[step])
+            if parsed is not None:
+                env.place(*parsed)
+                n_taken += 1
+            env.tick(ticks_per_action)
+            continue
 
         # #2: counterfactual probe BEFORE the real act (needs the entering state).
         if want_cl and len(obs_hist) >= DONOR_LAG:

@@ -41,12 +41,31 @@ from elm.evaluate_code import (
 from elm.operator import make_operator, OperatorError
 from elm.seeds import SEEDS
 
+# Appended to the mutate-path directives: push the operator to scale up rather
+# than tweak, and (for this run) require genuine closed-loop code with only a
+# small open-loop init() bootstrap.
+AMBITION = (
+    " THINK BIG. Be far MORE AMBITIOUS and MORE COMPLEX than the parent: aim for "
+    "a substantially larger, denser city with a higher cityPop than any parent. "
+    "Scale up what works — more neighborhoods, more power plants, more "
+    "infrastructure and civic services, smarter use of the whole 120x100 map — "
+    "rather than making a small, safe tweak. Reach."
+)
+CLOSED_LOOP_REQUIRE = (
+    " REQUIREMENT: act() must be genuinely CLOSED-LOOP — read obs each step and "
+    "change what you do as the city grows; FULLY OPEN-LOOP replay policies are "
+    "DISCARDED and score nothing. You MAY define a small open-loop init(obs, "
+    "state) (<= ~20 lines) returning a list of (tool,x,y) to lay a starting base "
+    "(plant + a few wires/roads); it runs first, then act() reacts and grows."
+)
+
 MUTATE_DIRECTIVE = (
     "Produce a DIFFERENT city. Consider: changing the zone mix (add commercial "
     "and industrial, not just residential), the cluster size/shape, the road & "
     "wire layout, adding a second neighborhood, or reacting to obs.tile_map "
     "instead of a fixed plan. Aim to grow cityPop while landing in a different "
     "region of behavior space than the parent."
+    + AMBITION + CLOSED_LOOP_REQUIRE
 )
 CROSSOVER_DIRECTIVE = (
     "Combine the strongest ideas from both parents into one coherent policy "
@@ -70,7 +89,12 @@ CLOSED_LOOP_DIRECTIVE = (
     "when the observed map changes (high reactivity) AND it should still grow "
     "cityPop. This explores the high-reactivity region of the archive that "
     "open-loop replay policies cannot reach."
+    + AMBITION +
+    " You MAY add a small open-loop init(obs, state) (<= ~20 lines) that lays a "
+    "starting base (plant + a few wires/roads); it runs first, then act() reacts."
 )
+# The crossover path also gets the ambition + closed-loop push.
+CROSSOVER_DIRECTIVE = CROSSOVER_DIRECTIVE + AMBITION + CLOSED_LOOP_REQUIRE
 CL_DEMAND_PROB = 0.5
 
 
@@ -198,6 +222,11 @@ def main():
                          "evolving it (skips re-seeding). Lets a long run "
                          "survive container restarts by relaunching from its "
                          "last checkpoint.")
+    ap.add_argument("--min-reactivity", type=float, default=-1.0,
+                    help="DISCARD fully open-loop genomes: requires measures=cl_ind. "
+                         "A genome is killed if max(cf_sensitivity, trajectory_"
+                         "divergence) <= this. Default -1.0 disables it; pass 0.0 "
+                         "to kill genomes that show no reactivity at all.")
     args = ap.parse_args()
 
     dims = tuple(int(x) for x in args.archive_dims.split(","))
@@ -326,7 +355,12 @@ def main():
     # slightly-stale parent snapshots this implies (standard parallel QD).
     t0 = time.time()
     lock = threading.Lock()
-    C = {"imp": 0, "inv": 0, "op": 0, "done": 0}
+    C = {"imp": 0, "inv": 0, "op": 0, "done": 0, "killed": 0}
+    # Mod: discard fully open-loop genomes (needs the cl_ind reactivity descriptor).
+    kill_open_loop = (args.measures == "cl_ind" and args.min_reactivity >= 0.0)
+    if kill_open_loop:
+        print(f"  killing fully open-loop genomes: "
+              f"max(cf, divergence) <= {args.min_reactivity}")
 
     def run_one(it: int):
         try:
@@ -366,6 +400,20 @@ def main():
                              "parents": list(parents), "error": r.error, "source": child})
                     print(f"it {it:4d} [{origin[:5]}] invalid: {r.error}")
                     return
+                # Mod: kill fully OPEN-LOOP genomes. With cl_ind, measures =
+                # (cf_sensitivity, trajectory_divergence, ind_share); a policy
+                # whose actions never change with the observation has cf≈div≈0.
+                if kill_open_loop and max(r.measures[0], r.measures[1]) <= args.min_reactivity:
+                    C["killed"] += 1
+                    log_gen({"event": "open_loop_killed", "iteration": it,
+                             "origin": origin, "parents": list(parents),
+                             "cf_sensitivity": r.measures[0],
+                             "trajectory_divergence": r.measures[1],
+                             "city_pop": r.city_pop, "source": child})
+                    print(f"it {it:4d} [{origin[:5]}] KILLED open-loop: "
+                          f"cf={r.measures[0]:.2f} div={r.measures[1]:.2f} "
+                          f"pop={r.city_pop}")
+                    return
                 imp, cell = archive.add(child, r.fitness, r.measures,
                                         city_pop=r.city_pop, parents=parents,
                                         origin=origin, iteration=it, render=r.render)
@@ -402,11 +450,13 @@ def main():
     archive.record_history(args.iters)
     archive.save(args.out)
     log_gen({"event": "run_end", "improved": C["imp"], "invalid": C["inv"],
-             "op_errors": C["op"], "filled": len(archive.cells)})
+             "op_errors": C["op"], "killed_open_loop": C["killed"],
+             "filled": len(archive.cells)})
     gen_log.close()
     dt = time.time() - t0
     print("\n" + archive.summary())
     print(f"improved={C['imp']} invalid={C['inv']} op_errors={C['op']} "
+          f"killed_open_loop={C['killed']} "
           f"in {dt:.1f}s ({dt/max(1,len(iters)):.2f}s/it, workers={args.workers})")
     print(f"saved archive -> {args.out}")
     print(f"saved full generation log -> {gen_log_path}")
