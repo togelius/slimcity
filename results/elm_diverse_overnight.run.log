@@ -594,3 +594,16 @@ ELM: operator=claude model=claude-sonnet-4-6
 it    1 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
 it    2 [cross]   fit=     7.4 pop=    0 m=(0.45,0.18) cell=(9, 3) | filled=65 best_pop=4460 best_fit=4516
 it    3 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it    4 [mutat]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it    5 [mutat] + fit=  2216.5 pop= 2200 m=(0.44,0.24) cell=(8, 4) | filled=65 best_pop=4460 best_fit=4516
+it    6 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it    7 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it    8 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00) cell=(19, 0) | filled=65 best_pop=4460 best_fit=4516
+it    9 [cross]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it   10 [mutat]   fit=     4.3 pop=    0 m=(0.57,0.00) cell=(11, 0) | filled=65 best_pop=4460 best_fit=4516
+it   11 [mutat]   fit=   874.8 pop=  852 m=(0.50,0.20) cell=(10, 3) | filled=65 best_pop=4460 best_fit=4516
+it   12 [mutat]   fit=     1.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it   13 [cross]   fit=     2.9 pop=    0 m=(0.50,0.12) cell=(10, 2) | filled=65 best_pop=4460 best_fit=4516
+it   14 [mut] op-error: LLM produced invalid policy: SyntaxError: did you forget parentheses around the comprehension target? (<genome>, line 133)
+it   15 [mutat]   fit=     3.5 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
+it   16 [mutat]   fit=     1.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=65 best_pop=4460 best_fit=4516
