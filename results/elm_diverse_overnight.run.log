@@ -1094,3 +1094,12 @@ it  500 [mutat]   fit=     2.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=80 b
 it  501 [mutat] + fit=   996.5 pop=  980 m=(0.13,0.24) cell=(2, 4) | filled=81 best_pop=4460 best_fit=4516
 it  502 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=81 best_pop=4460 best_fit=4516
 it  503 [mutat]   fit=     3.3 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=81 best_pop=4460 best_fit=4516
+resumed from results/elm_diverse_overnight.npz: filled=80/400 coverage=0.200 qd_score=98616.2
+best: fitness=4516.3 cityPop=4460 measures=(0.502,0.218) origin=crossover
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=res_ind archive=20x20 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=5 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_diverse_overnight_generations.jsonl
+it    1 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=80 best_pop=4460 best_fit=4516
+it    2 [cross]   fit=  2100.5 pop= 2084 m=(0.57,0.18) cell=(11, 3) | filled=80 best_pop=4460 best_fit=4516
+it    3 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=80 best_pop=4460 best_fit=4516
