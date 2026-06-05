@@ -30,8 +30,12 @@ class Elite:
 
 
 class MapElitesArchive:
-    def __init__(self, dims=(20, 20), ranges=((0.0, 1.0), (0.0, 1.0))):
+    def __init__(self, dims=(20, 20), ranges=None):
         self.dims = tuple(dims)
+        # Default every behavior axis to [0, 1]; supports any dimensionality
+        # (2-D res_ind, 3-D cl_ind, ...). Pass `ranges` to override.
+        if ranges is None:
+            ranges = tuple((0.0, 1.0) for _ in self.dims)
         self.ranges = tuple(tuple(r) for r in ranges)
         self.cells: dict[tuple, Elite] = {}
         self._next_id = 0
@@ -62,7 +66,7 @@ class MapElitesArchive:
         if improved:
             e = Elite(
                 source=source, fitness=float(fitness),
-                measures=(float(measures[0]), float(measures[1])),
+                measures=tuple(float(x) for x in measures),
                 city_pop=int(city_pop), parents=tuple(parents),
                 origin=origin, iteration=iteration, eid=self._next_id,
                 render=render,
@@ -145,7 +149,8 @@ class MapElitesArchive:
         ):
             arch.cells[tuple(int(c) for c in cell)] = Elite(
                 source=str(src), fitness=float(fit),
-                measures=(float(meas[0]), float(meas[1])), city_pop=int(cp),
+                measures=tuple(float(x) for x in np.atleast_1d(meas)),
+                city_pop=int(cp),
                 origin=str(org), iteration=int(it), eid=arch._next_id,
             )
             arch._next_id += 1
