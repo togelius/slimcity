@@ -33,7 +33,9 @@ import time
 import numpy as np
 
 from elm.archive import MapElitesArchive
-from elm.evaluate_code import eval_code, CodeResult, INVALID_FITNESS
+from elm.evaluate_code import (
+    eval_code, CodeResult, INVALID_FITNESS, aggregate_measures,
+)
 from elm.operator import make_operator, OperatorError
 from elm.seeds import SEEDS
 
@@ -112,8 +114,7 @@ def robust_eval(source, timeout, n_evals, base_seed, **kwargs):
     agg = CodeResult(
         ok=True,
         fitness=float(_np.mean(fits)),
-        measures=(float(_np.mean([r.measures[0] for r in ok])),
-                  float(_np.mean([r.measures[1] for r in ok]))),
+        measures=aggregate_measures(ok, kwargs.get("measures_mode", "res_ind")),
         city_pop=int(round(_np.mean([r.city_pop for r in ok]))),
         res_pop=int(round(_np.mean([r.res_pop for r in ok]))),
         com_pop=int(round(_np.mean([r.com_pop for r in ok]))),
@@ -149,8 +150,11 @@ def main():
     ap.add_argument("--fitness", default="dense",
                     choices=["pop", "dense", "varied", "growth"])
     ap.add_argument("--measures", default="res_ind",
-                    choices=["road_ind", "res_ind", "density", "entropy_count"])
-    ap.add_argument("--archive-dims", default="20,20")
+                    choices=["road_ind", "res_ind", "density", "entropy_count",
+                             "cl_ind"])
+    ap.add_argument("--archive-dims", default="20,20",
+                    help="comma dims; cl_ind is 3-D, e.g. 8,8,10 "
+                         "(cf_sensitivity, traj_divergence, ind_share)")
     # sandbox / io
     ap.add_argument("--timeout", type=float, default=15.0,
                     help="per-evaluation wall-clock budget (subprocess)")
@@ -193,8 +197,7 @@ def main():
                 return rs[0], []
             agg = CodeResult(
                 ok=True, fitness=float(np.mean([r.fitness for r in ok])),
-                measures=(float(np.mean([r.measures[0] for r in ok])),
-                          float(np.mean([r.measures[1] for r in ok]))),
+                measures=aggregate_measures(ok, args.measures),
                 city_pop=int(round(np.mean([r.city_pop for r in ok]))),
                 res_pop=int(round(np.mean([r.res_pop for r in ok]))),
                 com_pop=int(round(np.mean([r.com_pop for r in ok]))),
