@@ -1,0 +1,19 @@
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=res_ind archive=20x20 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=5 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_diverse_overnight_generations.jsonl
+  seed reactive fitness=   282.4 cityPop=  276 cell=(19, 0) rolls=[326.4, 346.4, 246.4, 246.4, 246.4] +
+  seed plan    fitness=   335.1 cityPop=  328 cell=(19, 0) rolls=[387.1, 367.1, 267.1, 367.1, 287.1] +
+  seed industrial fitness=    71.1 cityPop=   64 cell=(0, 19) rolls=[167.1, 7.1, 7.1, 167.1, 7.1] +
+  seed commercial fitness=     7.1 cityPop=    0 cell=(0, 0) rolls=[7.1, 7.1, 7.1, 7.1, 7.1] +
+  seed mixed   fitness=   219.1 cityPop=  212 cell=(7, 6) rolls=[7.1, 167.1, 327.1, 347.1, 247.1] +
+  seed res_ind fitness=   263.1 cityPop=  256 cell=(10, 10) rolls=[247.1, 207.1, 327.1, 287.1, 247.1] +
+  seed res_heavy fitness=   247.1 cityPop=  240 cell=(15, 5) rolls=[287.1, 167.1, 187.1, 327.1, 267.1] +
+  seed twin    fitness=   171.2 cityPop=  160 cell=(10, 9) rolls=[411.2, 411.2, 11.2, 11.2, 11.2] +
+it    1 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=7 best_pop=328 best_fit=335
+it    2 [cross] + fit=   536.7 pop=  528 m=(0.50,0.25) cell=(10, 4) | filled=8 best_pop=528 best_fit=537
+it    3 [mutat] + fit=   745.6 pop=  712 m=(0.54,0.18) cell=(10, 3) | filled=9 best_pop=712 best_fit=746
+it    4 [mutat] + fit=   426.4 pop=  408 m=(0.36,0.14) cell=(7, 2) | filled=10 best_pop=712 best_fit=746
+it    5 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=10 best_pop=712 best_fit=746
+it    6 [mutat]   fit=   456.4 pop=  448 m=(0.50,0.19) cell=(10, 3) | filled=10 best_pop=712 best_fit=746
+it    7 [mutat]   fit=     3.4 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=10 best_pop=712 best_fit=746
