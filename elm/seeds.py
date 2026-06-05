@@ -61,7 +61,49 @@ def act(obs, state):
     return (tool, x, y)
 '''
 
+# A genuinely CLOSED-LOOP starter: a short open-loop bootstrap to get a powered
+# base (so zones can grow at all), then per-step REACTIVE placement that reads
+# the CURRENT (growing, seed-dependent) map and extends the built-up area. This
+# gives the archive a reactive founder (cf_sensitivity>0, trajectory_divergence>0)
+# so a closed-loop lineage exists for the operator to evolve from. ~250 cityPop.
+SEED_REACTIVE = '''
+def base_plan():
+    cx, cy = WORLD_W // 2, WORLD_H // 2
+    p = [(Tool.COALPOWER, cx - 2, cy)]
+    for dy in range(-10, 11):
+        if dy != 0:
+            p.append((Tool.WIRE, cx, cy + dy))
+        p.append((Tool.ROAD, cx + 1, cy + dy))
+    for dy in range(-9, 10, 3):
+        p.append((Tool.RESIDENTIAL, cx - 3, cy + dy))
+    return p
+
+def act(obs, state):
+    # Phase 1: lay a small powered base (bootstrap so zones can grow).
+    if "p" not in state:
+        state["p"] = base_plan(); state["i"] = 0
+    if state["i"] < len(state["p"]):
+        a = state["p"][state["i"]]; state["i"] += 1
+        return a
+    # Phase 2: CLOSED-LOOP. React to the CURRENT map: place a residential zone on
+    # an empty tile adjacent to an existing residential tile, extending the city
+    # where it has actually grown. The choice depends on the live observation, so
+    # actions change as the city develops (and differ across worlds).
+    tm = obs.tile_map
+    res = res_mask(tm); emp = empty_mask(tm)
+    nbr = np.zeros_like(emp)
+    nbr[1:, :] |= res[:-1, :]; nbr[:-1, :] |= res[1:, :]
+    nbr[:, 1:] |= res[:, :-1]; nbr[:, :-1] |= res[:, 1:]
+    cand = emp & nbr
+    ys, xs = np.where(cand)
+    if len(xs) == 0:
+        return None
+    k = int(tm.sum()) % len(xs)
+    return (Tool.RESIDENTIAL, int(xs[k]), int(ys[k]))
+'''
+
 SEEDS = {
     "plan": SEED_PLAN,
     "random": SEED_RANDOM,
+    "reactive": SEED_REACTIVE,
 }

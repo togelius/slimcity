@@ -52,6 +52,26 @@ CROSSOVER_DIRECTIVE = (
     "Combine the strongest ideas from both parents into one coherent policy "
     "that grows a larger or more balanced city."
 )
+# Used 50% of the time (CL_DEMAND_PROB) to explicitly push the operator toward
+# genuinely reactive policies — the archive has cf_sensitivity / trajectory_
+# divergence axes but nothing in the plain directives asks for closed-loop code,
+# so the search otherwise stays 100% open-loop.
+CLOSED_LOOP_DIRECTIVE = (
+    "Write a genuinely CLOSED-LOOP policy. Each step, READ obs.tile_map (and "
+    "obs.city_pop / obs.powered_zones) and decide the NEXT single placement "
+    "from what you currently observe. Do NOT precompute a fixed list of "
+    "placements and replay it; use `state` only as light memory (e.g. a small "
+    "phase counter), never as a stored full plan. Concretely: scan the current "
+    "map with the mask helpers (wire_mask, empty_mask, res_mask, road_mask, "
+    "plant_mask), find where power and roads already reach, and place the next "
+    "wire/road/zone adjacent to what already exists, adapting as the city "
+    "grows. Still guarantee power (a coal plant + wires) and road access so "
+    "zones actually grow. GOAL: the policy's actions should genuinely change "
+    "when the observed map changes (high reactivity) AND it should still grow "
+    "cityPop. This explores the high-reactivity region of the archive that "
+    "open-loop replay policies cannot reach."
+)
+CL_DEMAND_PROB = 0.5
 
 
 # ---- robust sandboxed evaluation (parallel subprocesses + averaging) ----
@@ -304,7 +324,8 @@ def main():
             with lock:
                 do_cross = (len(archive.cells) >= 2
                             and rng.random() < args.crossover_rate)
-                origin = "crossover" if do_cross else "mutate"
+                cl_demand = rng.random() < CL_DEMAND_PROB  # 50%: demand closed-loop
+                origin = ("crossover" if do_cross else "mutate") + ("+cl" if cl_demand else "")
                 if do_cross:
                     p1, p2 = archive.sample(rng, k=2, weighted=args.weighted_parents)
                     parents, renders, ps = (p1.eid, p2.eid), (p1.render, p2.render), (p1, p2)
@@ -314,10 +335,11 @@ def main():
             # --- LLM operator (no lock) ---
             try:
                 if do_cross:
-                    child = operator.crossover(ps[0], ps[1], CROSSOVER_DIRECTIVE,
-                                               renders=renders)
+                    directive = CLOSED_LOOP_DIRECTIVE if cl_demand else CROSSOVER_DIRECTIVE
+                    child = operator.crossover(ps[0], ps[1], directive, renders=renders)
                 else:
-                    child = operator.mutate(ps[0], MUTATE_DIRECTIVE, render=renders)
+                    directive = CLOSED_LOOP_DIRECTIVE if cl_demand else MUTATE_DIRECTIVE
+                    child = operator.mutate(ps[0], directive, render=renders)
             except OperatorError as e:
                 with lock:
                     C["op"] += 1
