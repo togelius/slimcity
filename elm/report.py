@@ -37,6 +37,15 @@ def build_report(base: str) -> str:
     top = sorted(a.cells.values(), key=lambda e: -e.city_pop)[:10]
     hist = a.history
 
+    # Behavior-axis labels: 3-D archive is the closed-loop descriptor (cl_ind),
+    # 2-D is the (res_share, ind_share) family.
+    ndim = len(a.dims)
+    axes = (["cf_sensitivity", "traj_divergence", "ind_share"] if ndim == 3
+            else ["res_share", "ind_share"])
+
+    def mstr(m):
+        return ", ".join(f"{axes[i]}={m[i]:.2f}" for i in range(len(m)))
+
     L = []
     L.append(f"# SlimCity ELM run — {base.split('/')[-1]}")
     L.append("")
@@ -51,7 +60,7 @@ def build_report(base: str) -> str:
     if b:
         L.append(f"- **Best city: cityPop {b.city_pop}** (robust mean), fitness "
                  f"{b.fitness:.0f}, found at iter {b.iteration} via **{b.origin}**, "
-                 f"behavior (res={b.measures[0]:.2f}, ind={b.measures[1]:.2f}).")
+                 f"behavior ({mstr(b.measures)}).")
         L.append(f"- For comparison, the prior CMA-ME state of the art was "
                  f"cityPop 1,680 (layout genome) / 1,120 (action tape). "
                  f"{'**ELM beats it.**' if b.city_pop > 1680 else ''}")
@@ -71,11 +80,12 @@ def build_report(base: str) -> str:
     L.append("")
     L.append("## Top cities (robust mean over 5 rolls)")
     L.append("")
-    L.append("| rank | cityPop | fitness | res | ind | origin | iter |")
-    L.append("|---|---|---|---|---|---|---|")
+    L.append("| rank | cityPop | fitness | " + " | ".join(axes) + " | origin | iter |")
+    L.append("|---|---|---|" + "---|" * len(axes) + "---|---|")
     for i, e in enumerate(top, 1):
-        L.append(f"| {i} | {e.city_pop} | {e.fitness:.0f} | {e.measures[0]:.2f} | "
-                 f"{e.measures[1]:.2f} | {e.origin} | {e.iteration} |")
+        mcols = " | ".join(f"{e.measures[k]:.2f}" for k in range(len(e.measures)))
+        L.append(f"| {i} | {e.city_pop} | {e.fitness:.0f} | {mcols} | "
+                 f"{e.origin} | {e.iteration} |")
     L.append("")
     L.append("## QD-score / coverage progress")
     if hist:
