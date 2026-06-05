@@ -10,7 +10,7 @@ For the layout deep-dive, see `LAYOUTS.md`.
 | family | what evolves | typical params | best replay cityPop | typical wall time |
 |---|---|---:|---:|---:|
 | **Layout evolution** | The city itself (categorical 30×25 grid + tax) | 3,751 | **1,680** (50k evals: 1,820) | **11 min** |
-| **ELM** (code-genome) | **Python source code** for `act(obs, state)` (a closed-loop policy), mutated/crossed by Claude | N/A (tokens) | **1,792** | hundreds of LLM calls |
+| **ELM** (code-genome) | **Python source code** for `act(obs, state)`, mutated/crossed by Claude | N/A (tokens) | **4,460** (diverse-seed run; prior 1,792) | hundreds–thousands of LLM calls |
 | **Open-loop ActionTape** | A fixed sequence of `(tool, x, y)` triples | 300–3,000 | 1,120 (tape@600) | ~1 h |
 | **Hybrid** (tape + net) | Tape prefix + closed-loop net tail | 5k–13k | 740 (rich_hybrid@500) | ~10 h |
 | **Closed-loop ConvPolicy / DeepConv / MLP** | A single network from obs → action | 0.7k–155k | **0** | hours, scaled with depth |
@@ -23,26 +23,38 @@ Replay-verified `cityPop`, deterministic engine:
 
 | rank | approach | cityPop | R/C/I | params | wall (8w on M4) | notes |
 |---:|---|---:|---|---:|---:|---|
-| 1 | **`layout` res_ind 50k evals** | **1,820** | 78/1/0 | 3,751 | ~37 min | replay #3 of stored top-3 |
-| 2 | **ELM (Claude as mutator, 148 iters)** | **1,792** | (heavy R) | N/A — Python source | hundreds of API calls | **closed-loop policy in code form** — beats every CMA-ES-trained net by 5× |
-| 3 | `layout` res_ind 10k evals | 1,680 | 53/2/0 | 3,751 | 11 min | first layout milestone |
-| 4 | `tape` @600 varied | 1,120 | 8/0/5 | 1,800 | overnight | first R+I mix, policy-based |
-| 5 | `layout` density | 1,180 | 59/0/0 | 3,751 | 33 min | archive collapsed |
-| 6 | `tape` @400 varied | 800 | 0/0/5 | 1,200 | 15 min | pure industrial |
-| 7 | `tape` @800 res_ind n=3 | 780 | 11/0/4 | 2,400 | ~3 h | most res, smaller total |
-| 8 | **`rich_hybrid` t200@500 growth ec** | **740** | **4/0/4** | 12,752 | 9.9 h | **first closed-loop mixed R+I** |
-| 9 | `tape` @300 growth ec | 660 | 1/0/4 | 900 | 22 min | first tape@300 with R |
-| 10 | `tape` @200 varied | 640 | 0/0/4 | 600 | 9 min | |
+| 1 | **ELM diverse-seed run (Claude mutator, ~1.16k iters)** | **4,460** | ~½R ¼I ¼C | N/A — Python source | ~5 h (resumed) | **new champion**, ~2.4×; **open-loop blueprint** (replay mean 4,085/8 seeds). See [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md) |
+| 2 | **`layout` res_ind 50k evals** | **1,820** | 78/1/0 | 3,751 | ~37 min | replay #3 of stored top-3 |
+| 3 | **ELM (Claude as mutator, 148 iters)** | **1,792** | (heavy R) | N/A — Python source | hundreds of API calls | prior ELM best — beats every CMA-ES-trained net by 5× |
+| 4 | `layout` res_ind 10k evals | 1,680 | 53/2/0 | 3,751 | 11 min | first layout milestone |
+| 5 | `tape` @600 varied | 1,120 | 8/0/5 | 1,800 | overnight | first R+I mix, policy-based |
+| 6 | `layout` density | 1,180 | 59/0/0 | 3,751 | 33 min | archive collapsed |
+| 7 | `tape` @400 varied | 800 | 0/0/5 | 1,200 | 15 min | pure industrial |
+| 8 | `tape` @800 res_ind n=3 | 780 | 11/0/4 | 2,400 | ~3 h | most res, smaller total |
+| 9 | **`rich_hybrid` t200@500 growth ec** | **740** | **4/0/4** | 12,752 | 9.9 h | **first closed-loop mixed R+I** |
+| 10 | `tape` @300 growth ec | 660 | 1/0/4 | 900 | 22 min | first tape@300 with R |
+| 11 | `tape` @200 varied | 640 | 0/0/4 | 600 | 9 min | |
 | ~ | `hybrid` / `rich_hybrid` 100@300 | 640 | 0/0/4 | 5k–13k | 6 h | hybrid ceiling |
 | ~ | `rich_randprefix` 50@200 n=5 | 360 | 9/0/1 | 12,452 | 5.5 h | first net-only mixed R+I |
 | ~ | `randprefix` n=5 | 160 | 0/0/1 | 11k | 2.3 h | first net-based growth, single zone |
 | ~ | `randprefix` n=10 | 0 | 0/0/0 | 11k | 4.5 h | over-averaging killed lucky-seed |
 | ~ | every closed-loop net without scaffolding | **0** | 0/0/0 | 0.7k–155k | hours | bonuses only |
 
-**Headline**: two very different things both reach cityPop ≈ 1,800:
+**Headline**: ELM with a **diverse seed front** is the new champion at cityPop
+**≈4,460** (replay mean 4,085), ~2.4× the previous best. Two more findings:
 
-- **Layout-CMA-ES** (1,820) bypasses the action-by-action problem entirely by encoding the city directly.
-- **ELM** (1,792) confronts the action-by-action problem head-on — same closed-loop cadence as our failing nets — but uses Claude as the variation operator on **Python source code**. The LLM's prior on what good code looks like turns out to outperform CMA-ES on the same task that produced cityPop=0 for every CMA-ES-trained net.
+- **The peak is open-loop.** When free to optimize, Claude does *not* evolve a
+  closed-loop controller — it authors large, fixed **blueprints** (precompute
+  hundreds of `(tool,x,y)` placements, replay them, ignore `obs`). Of 1,168
+  genomes generated, only 5 (0.4%) ever read simulation feedback; **0 of 84
+  archive elites are closed-loop**. This corrects the earlier "ELM = closed-loop
+  policy in code form" framing. See [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md).
+- **Layout-CMA-ES** (1,820) bypasses the action-by-action problem by encoding
+  the city directly — the same conclusion from a different direction: on this
+  task, committing to a global layout beats deciding tile-by-tile.
+
+The earlier read still holds for the *parametric* methods: everything that uses
+CMA-ES on a dense policy vector tops out around 1,120 (tape@600).
 
 Everything that uses CMA-ES on a parametric policy tops out around 1,120 (tape@600). The dramatic gap between ELM and the CMA-ES nets — both are closed-loop, both decide one tile at a time — strongly suggests **the bottleneck for the CMA-ES nets was the search algorithm + parameterization, not the closed-loop framing itself**.
 

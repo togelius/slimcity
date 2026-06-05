@@ -5,6 +5,12 @@ deciding what to try.
 
 ## Headline
 
+> **Overall champion: ELM diverse-seed run, cityPop ≈ 4,460** (replay mean
+> 4,085), ~2.4× the layout/ELM records below. It's an **open-loop blueprint**
+> evolved as Python source — 0 of 84 archive elites are closed-loop. Full
+> analysis in [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md); cross-method context in
+> [SUMMARY.md](SUMMARY.md). The table below is the best *CMA-ES / layout* city.
+
 Best deterministic city grown from a blank map:
 
 | metric                                 | best |
