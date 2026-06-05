@@ -1103,3 +1103,4 @@ ELM: operator=claude model=claude-sonnet-4-6
 it    1 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=80 best_pop=4460 best_fit=4516
 it    2 [cross]   fit=  2100.5 pop= 2084 m=(0.57,0.18) cell=(11, 3) | filled=80 best_pop=4460 best_fit=4516
 it    3 [mutat]   fit=     2.2 pop=    0 m=(0.00,0.00) cell=(0, 0) | filled=80 best_pop=4460 best_fit=4516
+it    4 [mutat] + fit=   229.8 pop=  224 m=(0.00,0.66) cell=(0, 13) | filled=81 best_pop=4460 best_fit=4516
