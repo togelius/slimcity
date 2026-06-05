@@ -186,9 +186,19 @@ class MockOperator:
     _ZONES = ["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"]
 
     def __init__(self, rng):
-        self.rng = rng
+        import threading
+        import numpy as _np
+        # Independent generator (seeded once from the shared rng) so it doesn't
+        # race with the driver's use of `rng` for parent sampling under threads.
+        seed = int(rng.integers(1 << 31)) if rng is not None else 0
+        self.rng = _np.random.default_rng(seed)
+        self._lock = threading.Lock()  # numpy Generator isn't thread-safe
 
     def _tweak(self, source: str) -> str:
+        with self._lock:
+            return self._tweak_locked(source)
+
+    def _tweak_locked(self, source: str) -> str:
         r = self.rng.random()
         out = source
         if "Tool.RESIDENTIAL" in source and r < 0.5:

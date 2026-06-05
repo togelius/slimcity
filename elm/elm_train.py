@@ -28,7 +28,9 @@ import argparse
 import json
 import multiprocessing as mp
 import os
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
@@ -156,6 +158,10 @@ def main():
                     help="comma dims; cl_ind is 3-D, e.g. 8,8,10 "
                          "(cf_sensitivity, traj_divergence, ind_share)")
     # sandbox / io
+    ap.add_argument("--workers", type=int, default=1,
+                    help="concurrent operator+eval pipelines (threads). Each does "
+                         "its own LLM call + n_evals subprocesses; peak procs ~ "
+                         "workers*n_evals. >1 keeps the CPU busy while LLM calls wait.")
     ap.add_argument("--timeout", type=float, default=15.0,
                     help="per-evaluation wall-clock budget (subprocess)")
     ap.add_argument("--no-sandbox", action="store_true",
@@ -284,69 +290,93 @@ def main():
             print("no seeds inserted — aborting."); return
         archive.record_history(0)
 
-    # ---- evolve ----
+    # ---- evolve (optionally concurrent: --workers threads) ----
+    # All shared state (archive, rng, gen_log, counters, stdout) is touched only
+    # under `lock`; the slow parts (LLM call, env eval) run outside it, so N
+    # workers overlap their LLM waits + eval bursts. MAP-Elites tolerates the
+    # slightly-stale parent snapshots this implies (standard parallel QD).
     t0 = time.time()
-    n_improved = n_invalid = n_op_err = 0
-    for it in range(start_iter, args.iters + 1):
-        do_cross = (len(archive.cells) >= 2 and rng.random() < args.crossover_rate)
-        origin = "crossover" if do_cross else "mutate"
-        parents = ()
+    lock = threading.Lock()
+    C = {"imp": 0, "inv": 0, "op": 0, "done": 0}
+
+    def run_one(it: int):
         try:
-            if do_cross:
-                p1, p2 = archive.sample(rng, k=2, weighted=args.weighted_parents)
-                parents = (p1.eid, p2.eid)
-                child = operator.crossover(p1, p2, CROSSOVER_DIRECTIVE,
-                                           renders=(p1.render, p2.render))
-            else:
-                (p,) = archive.sample(rng, k=1, weighted=args.weighted_parents)
-                parents = (p.eid,)
-                child = operator.mutate(p, MUTATE_DIRECTIVE, render=p.render)
-        except OperatorError as e:
-            n_op_err += 1
-            log_gen({"event": "op_error", "iteration": it, "origin": origin,
-                     "parents": list(parents), "error": str(e),
-                     "source": getattr(e, "raw", None)})
-            print(f"it {it:4d} [{('xover' if do_cross else 'mut')}] op-error: {e}")
-            continue
+            with lock:
+                do_cross = (len(archive.cells) >= 2
+                            and rng.random() < args.crossover_rate)
+                origin = "crossover" if do_cross else "mutate"
+                if do_cross:
+                    p1, p2 = archive.sample(rng, k=2, weighted=args.weighted_parents)
+                    parents, renders, ps = (p1.eid, p2.eid), (p1.render, p2.render), (p1, p2)
+                else:
+                    (p,) = archive.sample(rng, k=1, weighted=args.weighted_parents)
+                    parents, renders, ps = (p.eid,), p.render, (p,)
+            # --- LLM operator (no lock) ---
+            try:
+                if do_cross:
+                    child = operator.crossover(ps[0], ps[1], CROSSOVER_DIRECTIVE,
+                                               renders=renders)
+                else:
+                    child = operator.mutate(ps[0], MUTATE_DIRECTIVE, render=renders)
+            except OperatorError as e:
+                with lock:
+                    C["op"] += 1
+                    log_gen({"event": "op_error", "iteration": it, "origin": origin,
+                             "parents": list(parents), "error": str(e),
+                             "source": getattr(e, "raw", None)})
+                    print(f"it {it:4d} [{origin[:5]}] op-error: {e}")
+                return
+            # --- evaluation (no lock; spawns its own subprocesses) ---
+            r, spread = evaluate(child)
+            with lock:
+                if not r.ok:
+                    C["inv"] += 1
+                    log_gen({"event": "invalid", "iteration": it, "origin": origin,
+                             "parents": list(parents), "error": r.error, "source": child})
+                    print(f"it {it:4d} [{origin[:5]}] invalid: {r.error}")
+                    return
+                imp, cell = archive.add(child, r.fitness, r.measures,
+                                        city_pop=r.city_pop, parents=parents,
+                                        origin=origin, iteration=it, render=r.render)
+                log_gen({"event": "eval", "iteration": it, "origin": origin,
+                         "parents": list(parents), "improved": bool(imp),
+                         "cell": list(cell), "fitness": r.fitness,
+                         "measures": list(r.measures), "city_pop": r.city_pop,
+                         "res_pop": r.res_pop, "com_pop": r.com_pop,
+                         "ind_pop": r.ind_pop, "n_errors": r.n_errors,
+                         "error": r.error, "eval_fits": spread, "source": child})
+                C["imp"] += int(imp)
+                C["done"] += 1
+                b = archive.best
+                mstr = ",".join(f"{x:.2f}" for x in r.measures)
+                print(f"it {it:4d} [{origin[:5]}] {'+' if imp else ' '} "
+                      f"fit={r.fitness:8.1f} pop={r.city_pop:5d} m=({mstr}) "
+                      f"cell={cell} | filled={len(archive.cells)} "
+                      f"best_pop={b.city_pop} best_fit={b.fitness:.0f}")
+                if C["done"] % args.save_every == 0:
+                    archive.record_history(it)
+                    archive.save(args.out)
+        except Exception as e:  # noqa: BLE001 — never let one iteration kill the pool
+            with lock:
+                print(f"it {it:4d} UNEXPECTED: {type(e).__name__}: {e}")
 
-        r, spread = evaluate(child)
-        if not r.ok:
-            n_invalid += 1
-            log_gen({"event": "invalid", "iteration": it, "origin": origin,
-                     "parents": list(parents), "error": r.error, "source": child})
-            print(f"it {it:4d} [{origin[:5]}] invalid: {r.error}")
-            continue
-
-        imp, cell = archive.add(child, r.fitness, r.measures, city_pop=r.city_pop,
-                                parents=parents, origin=origin, iteration=it,
-                                render=r.render)
-        log_gen({"event": "eval", "iteration": it, "origin": origin,
-                 "parents": list(parents), "improved": bool(imp), "cell": list(cell),
-                 "fitness": r.fitness, "measures": list(r.measures),
-                 "city_pop": r.city_pop, "res_pop": r.res_pop, "com_pop": r.com_pop,
-                 "ind_pop": r.ind_pop, "n_errors": r.n_errors, "error": r.error,
-                 "eval_fits": spread, "source": child})
-        n_improved += int(imp)
-        b = archive.best
-        flag = "+" if imp else " "
-        print(f"it {it:4d} [{origin[:5]}] {flag} fit={r.fitness:8.1f} "
-              f"pop={r.city_pop:5d} m=({r.measures[0]:.2f},{r.measures[1]:.2f}) "
-              f"cell={cell} | filled={len(archive.cells)} "
-              f"best_pop={b.city_pop} best_fit={b.fitness:.0f}")
-
-        if it % args.save_every == 0:
-            archive.record_history(it)
-            archive.save(args.out)
+    iters = list(range(start_iter, args.iters + 1))
+    if args.workers <= 1:
+        for it in iters:
+            run_one(it)
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            list(ex.map(run_one, iters))
 
     archive.record_history(args.iters)
     archive.save(args.out)
-    log_gen({"event": "run_end", "improved": n_improved, "invalid": n_invalid,
-             "op_errors": n_op_err, "filled": len(archive.cells)})
+    log_gen({"event": "run_end", "improved": C["imp"], "invalid": C["inv"],
+             "op_errors": C["op"], "filled": len(archive.cells)})
     gen_log.close()
     dt = time.time() - t0
     print("\n" + archive.summary())
-    print(f"improved={n_improved} invalid={n_invalid} op_errors={n_op_err} "
-          f"in {dt:.1f}s ({dt/max(1,args.iters):.2f}s/it)")
+    print(f"improved={C['imp']} invalid={C['inv']} op_errors={C['op']} "
+          f"in {dt:.1f}s ({dt/max(1,len(iters)):.2f}s/it, workers={args.workers})")
     print(f"saved archive -> {args.out}")
     print(f"saved full generation log -> {gen_log_path}")
 
