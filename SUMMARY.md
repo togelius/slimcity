@@ -47,8 +47,11 @@ Replay-verified `cityPop`, deterministic engine:
   closed-loop controller — it authors large, fixed **blueprints** (precompute
   hundreds of `(tool,x,y)` placements, replay them, ignore `obs`). Of 1,168
   genomes generated, only 5 (0.4%) ever read simulation feedback; **0 of 84
-  archive elites are closed-loop**. This corrects the earlier "ELM = closed-loop
-  policy in code form" framing. See [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md).
+  archive elites are closed-loop**. This nuances the earlier "ELM = closed-loop
+  policy in code form" framing — though note this run used the *default*
+  directives; the concurrent closed-loop-pressure work (PRs #13–#16) is built to
+  test whether reactive policies can compete once explicitly demanded. See
+  [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md).
 - **Layout-CMA-ES** (1,820) bypasses the action-by-action problem by encoding
   the city directly — the same conclusion from a different direction: on this
   task, committing to a global layout beats deciding tile-by-tile.

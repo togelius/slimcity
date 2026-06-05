@@ -90,6 +90,16 @@ can author and recombine large, structured, *correct* fixed blueprints
 (hundreds of coordinated placements) that neither CMA-ES vectors nor reactive
 nets could express.
 
+**Scope / caveat:** this run used the **default** mutate/crossover directives —
+nothing in them asks for reactive code, so open-loop dominating is partly the
+search following the path of least resistance. Concurrent work on `main`
+(PRs #13–#16) addresses exactly this: a `CLOSED_LOOP_DIRECTIVE` that explicitly
+demands reactive policies ~50% of the time, plus closed-loopness QD descriptors
+(counterfactual sensitivity / trajectory divergence) that give reactive lineages
+their own niche to survive in. Whether that pressure lets closed-loop policies
+*compete on cityPop* with these open-loop blueprints is the open question those
+changes are built to answer — this run predates them and doesn't settle it.
+
 ## Strategy archetypes
 
 ### A. Multi-district powered-spine blueprint + civic services — *the winner family*
@@ -188,8 +198,10 @@ end here**: max cityPop 276, dominated immediately, 0 surviving elites.
    cells are unbalanced or service-free.
 4. **Closed-loop remains the hard regime** — even with an LLM mutator. The one
    reactive lineage never competed. Making closed-loop win would likely need it
-   to be *protected* (its own QD measure / niche) rather than thrown into open
-   fitness competition with blueprints.
+   to be *protected* (its own QD measure / niche) and *explicitly demanded*
+   rather than thrown into open fitness competition with blueprints — which is
+   precisely what the concurrent `main` work (closed-loop directive + closed-
+   loopness descriptors) sets out to test.
 
 ## Caveats
 
