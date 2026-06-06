@@ -41,15 +41,13 @@ from elm.evaluate_code import (
 from elm.operator import make_operator, OperatorError
 from elm.seeds import SEEDS
 
-# Appended to the mutate-path directives: push the operator to scale up rather
-# than tweak, and (for this run) require genuine closed-loop code with only a
-# small open-loop init() bootstrap.
+# Appended to the mutate-path directives: keep the operator pointed at the
+# actual objective (population) without over-prescribing HOW — earlier, detailed
+# "think big / more plants / use the whole map" language produced sprawled,
+# fragmented cities that scored worse than a dense compact core.
 AMBITION = (
-    " THINK BIG. Be far MORE AMBITIOUS and MORE COMPLEX than the parent: aim for "
-    "a substantially larger, denser city with a higher cityPop than any parent. "
-    "Scale up what works — more neighborhoods, more power plants, more "
-    "infrastructure and civic services, smarter use of the whole 120x100 map — "
-    "rather than making a small, safe tweak. Reach."
+    " Build a city that can support a LARGE POPULATION — maximizing the in-game "
+    "population is the objective."
 )
 CLOSED_LOOP_REQUIRE = (
     " REQUIREMENT: act() must be genuinely CLOSED-LOOP — read obs each step and "
