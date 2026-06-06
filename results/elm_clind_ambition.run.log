@@ -584,3 +584,15 @@ ELM: operator=claude model=claude-sonnet-4-6
 it  573 [cross]   fit=    49.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=58 best_pop=2613 best_fit=2623
 it  572 [mutat]   fit=   813.8 pop=  793 m=(0.99,0.23,0.29) cell=(7, 1, 2) | filled=58 best_pop=2613 best_fit=2623
 it  574 [mutat]   fit=   344.6 pop=  320 m=(0.97,0.19,0.29) cell=(7, 1, 2) | filled=58 best_pop=2613 best_fit=2623
+it  575 [mutat] + fit=     5.0 pop=    0 m=(0.50,0.00,0.20) cell=(4, 0, 2) | filled=59 best_pop=2613 best_fit=2623
+it  577 [cross] + fit=   706.0 pop=  680 m=(0.41,0.86,0.32) cell=(3, 6, 3) | filled=60 best_pop=2613 best_fit=2623
+it  576 [cross]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=60 best_pop=2613 best_fit=2623
+it  579 [cross]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=60 best_pop=2613 best_fit=2623
+it  578 [mutat] + fit=  1480.0 pop= 1453 m=(0.86,0.12,0.21) cell=(6, 0, 2) | filled=60 best_pop=2613 best_fit=2623
+it  580 [mutat]   fit=     6.2 pop=    0 m=(0.08,0.00,0.00) cell=(0, 0, 0) | filled=60 best_pop=2613 best_fit=2623
+it  582 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=60 best_pop=2613 best_fit=2623
+it  581 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.50) cell=(7, 0, 5) | filled=60 best_pop=2613 best_fit=2623
+it  583 [cross] + fit=   654.3 pop=  640 m=(0.84,0.14,1.00) cell=(6, 1, 9) | filled=61 best_pop=2613 best_fit=2623
+it  585 [mutat]   fit=    18.4 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=61 best_pop=2613 best_fit=2623
+it  584 [mutat]   fit=     7.7 pop=    0 m=(1.00,0.00,0.27) cell=(7, 0, 2) | filled=61 best_pop=2613 best_fit=2623
+it  586 [mutat]   fit=    10.2 pop=    0 m=(0.80,0.06,0.23) cell=(6, 0, 2) | filled=61 best_pop=2613 best_fit=2623
