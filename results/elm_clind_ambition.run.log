@@ -86,3 +86,501 @@ it   79 [cross]   fit=   721.2 pop=  707 m=(1.00,0.33,0.26) cell=(7, 2, 2) | fil
 it   80 [cross]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=14 best_pop=2613 best_fit=2623
 it   81 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
 it   82 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=14 best_pop=2613 best_fit=2623
+it   83 [cross]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=14 best_pop=2613 best_fit=2623
+it   84 [mutat]   fit=     4.0 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=14 best_pop=2613 best_fit=2623
+it   85 [mutat] + fit=     7.2 pop=    0 m=(0.10,0.03,0.33) cell=(0, 0, 3) | filled=15 best_pop=2613 best_fit=2623
+it   86 [mutat]   fit=     6.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=15 best_pop=2613 best_fit=2623
+it   87 [mutat] + fit=     5.0 pop=    0 m=(0.13,0.00,0.00) cell=(1, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   89 [mutat] + fit=    56.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   88 [cross] + fit=   912.3 pop=  893 m=(1.00,0.04,0.25) cell=(7, 0, 2) | filled=16 best_pop=2613 best_fit=2623
+it   90 [mutat]   fit=     4.0 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   92 [mutat]   fit=     2.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   91 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   93 [mutat]   fit=     6.3 pop=    0 m=(0.12,0.00,0.00) cell=(0, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   94 [mutat]   fit=     5.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   95 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   96 [cross]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   97 [mutat]   fit=     5.8 pop=    0 m=(0.94,0.00,0.00) cell=(7, 0, 0) | filled=16 best_pop=2613 best_fit=2623
+it   98 [cross]   fit=    17.1 pop=    0 m=(1.00,0.00,0.22) cell=(7, 0, 2) | filled=16 best_pop=2613 best_fit=2623
+it   99 [mutat] + fit=   885.4 pop=  853 m=(0.47,0.24,0.27) cell=(3, 1, 2) | filled=17 best_pop=2613 best_fit=2623
+it  100 [cross]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  101 [cross]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  102 [mutat]   fit=     4.5 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  103 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  104 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  105 [mutat] + fit=    21.4 pop=    0 m=(0.30,0.00,0.00) cell=(2, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  106 [mutat]   fit=     6.1 pop=    0 m=(0.08,0.00,0.00) cell=(0, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  108 [cross]   fit=     4.4 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  107 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=17 best_pop=2613 best_fit=2623
+it  109 [mutat] + fit=   666.3 pop=  640 m=(0.99,0.52,0.47) cell=(7, 4, 4) | filled=18 best_pop=2613 best_fit=2623
+it  110 [mutat] + fit=    24.9 pop=    0 m=(0.40,0.00,0.00) cell=(3, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  111 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  112 [cross]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  113 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  114 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  115 [cross]   fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  116 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  117 [mutat]   fit=    13.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  118 [mutat]   fit=    35.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=18 best_pop=2613 best_fit=2623
+it  119 [mutat] + fit=   795.0 pop=  773 m=(0.64,0.60,0.27) cell=(5, 4, 2) | filled=19 best_pop=2613 best_fit=2623
+it  120 [mutat]   fit=     2.5 pop=    0 m=(0.01,0.00,0.00) cell=(0, 0, 0) | filled=19 best_pop=2613 best_fit=2623
+it  121 [cross] + fit=    41.1 pop=    0 m=(0.68,0.00,0.00) cell=(5, 0, 0) | filled=20 best_pop=2613 best_fit=2623
+it  122 [mutat] + fit=    29.5 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=20 best_pop=2613 best_fit=2623
+it  123 [mutat] + fit=   124.5 pop=  107 m=(1.00,0.20,0.32) cell=(7, 1, 3) | filled=21 best_pop=2613 best_fit=2623
+it  124 [mutat] + fit=    74.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=21 best_pop=2613 best_fit=2623
+it  125 [mutat]   fit=     8.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=21 best_pop=2613 best_fit=2623
+it  126 [cross] + fit=  1330.1 pop= 1307 m=(1.00,0.41,0.24) cell=(7, 3, 2) | filled=21 best_pop=2613 best_fit=2623
+it  127 [mutat] + fit=    15.6 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=21 best_pop=2613 best_fit=2623
+it  128 [cross] + fit=     7.0 pop=    0 m=(1.00,0.00,0.40) cell=(7, 0, 4) | filled=22 best_pop=2613 best_fit=2623
+it  129 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  130 [mutat]   fit=    63.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=22 best_pop=2613 best_fit=2623
+it  131 [cross]   fit=    50.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=22 best_pop=2613 best_fit=2623
+it  132 [mutat] + fit=    36.5 pop=    0 m=(0.60,0.00,0.00) cell=(4, 0, 0) | filled=22 best_pop=2613 best_fit=2623
+it  133 [mutat]   fit=    19.1 pop=    0 m=(0.28,0.00,0.00) cell=(2, 0, 0) | filled=22 best_pop=2613 best_fit=2623
+it  134 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=22 best_pop=2613 best_fit=2623
+it  135 [cross] + fit=   168.3 pop=  160 m=(0.96,0.22,0.20) cell=(7, 1, 2) | filled=23 best_pop=2613 best_fit=2623
+it  136 [cross]   fit=     7.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=23 best_pop=2613 best_fit=2623
+it  137 [cross]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=23 best_pop=2613 best_fit=2623
+it  138 [cross] + fit=  1882.8 pop= 1853 m=(0.83,0.47,0.24) cell=(6, 3, 2) | filled=24 best_pop=2613 best_fit=2623
+it  139 [mutat]   fit=   920.5 pop=  907 m=(1.00,0.47,0.23) cell=(7, 3, 2) | filled=24 best_pop=2613 best_fit=2623
+it  140 [mutat]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=24 best_pop=2613 best_fit=2623
+it  141 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=24 best_pop=2613 best_fit=2623
+it  142 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  143 [mutat]   fit=    10.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=24 best_pop=2613 best_fit=2623
+it  144 [mutat] + fit=   899.0 pop=  853 m=(0.96,0.65,0.29) cell=(7, 5, 2) | filled=25 best_pop=2613 best_fit=2623
+it  145 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=25 best_pop=2613 best_fit=2623
+it  146 [cross] + fit=   881.7 pop=  853 m=(0.95,0.58,0.32) cell=(7, 4, 3) | filled=26 best_pop=2613 best_fit=2623
+it  148 [mutat]   fit=     8.1 pop=    0 m=(1.00,0.00,0.40) cell=(7, 0, 3) | filled=26 best_pop=2613 best_fit=2623
+it  147 [cross]   fit=     5.2 pop=    0 m=(0.06,0.00,0.00) cell=(0, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  149 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  150 [mutat]   fit=   625.7 pop=  613 m=(1.00,0.27,0.29) cell=(7, 2, 2) | filled=26 best_pop=2613 best_fit=2623
+it  151 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  152 [mutat]   fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  153 [mutat]   fit=     6.9 pop=    0 m=(1.00,0.00,0.25) cell=(7, 0, 2) | filled=26 best_pop=2613 best_fit=2623
+it  154 [mutat]   fit=   423.3 pop=  413 m=(1.00,0.08,0.29) cell=(7, 0, 2) | filled=26 best_pop=2613 best_fit=2623
+it  155 [cross]   fit=   171.3 pop=  153 m=(1.00,0.04,0.21) cell=(7, 0, 2) | filled=26 best_pop=2613 best_fit=2623
+it  156 [mutat]   fit=    15.6 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  157 [mutat]   fit=   298.2 pop=  280 m=(1.00,0.01,0.23) cell=(7, 0, 2) | filled=26 best_pop=2613 best_fit=2623
+it  158 [mutat]   fit=   758.4 pop=  720 m=(0.99,0.39,0.23) cell=(7, 3, 2) | filled=26 best_pop=2613 best_fit=2623
+it  159 [mutat]   fit=     7.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  160 [mutat]   fit=    36.4 pop=    0 m=(0.60,0.00,0.00) cell=(4, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  161 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=26 best_pop=2613 best_fit=2623
+it  162 [mutat] + fit=     5.8 pop=    0 m=(0.79,0.00,0.33) cell=(6, 0, 3) | filled=27 best_pop=2613 best_fit=2623
+it  163 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=27 best_pop=2613 best_fit=2623
+it  164 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=27 best_pop=2613 best_fit=2623
+it  165 [mutat] + fit=   649.6 pop=  640 m=(1.00,0.78,0.32) cell=(7, 6, 3) | filled=28 best_pop=2613 best_fit=2623
+it  166 [mutat]   fit=    98.8 pop=   80 m=(1.00,0.06,0.25) cell=(7, 0, 2) | filled=28 best_pop=2613 best_fit=2623
+it  167 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  168 [mutat]   fit=     4.8 pop=    0 m=(0.01,0.00,0.00) cell=(0, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  169 [mutat]   fit=   308.0 pop=  293 m=(0.98,0.37,0.29) cell=(7, 2, 2) | filled=28 best_pop=2613 best_fit=2623
+it  170 [mutat]   fit=     5.7 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  171 [cross]   fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  172 [cross]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  173 [mutat]   fit=    57.4 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  174 [mutat]   fit=    20.2 pop=    0 m=(0.32,0.00,0.00) cell=(2, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  175 [cross]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  176 [mutat]   fit=     4.0 pop=    0 m=(0.08,0.00,0.00) cell=(0, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  177 [mutat] + fit=   414.8 pop=  393 m=(1.00,0.00,0.33) cell=(7, 0, 3) | filled=28 best_pop=2613 best_fit=2623
+it  178 [mutat]   fit=     7.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  179 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  180 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  181 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  182 [mutat]   fit=    20.2 pop=    0 m=(0.32,0.00,0.00) cell=(2, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  183 [mutat]   fit=    15.5 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=28 best_pop=2613 best_fit=2623
+it  185 [cross]   fit=     7.7 pop=    0 m=(1.00,0.00,0.23) cell=(7, 0, 2) | filled=28 best_pop=2613 best_fit=2623
+it  184 [mutat] + fit=   335.2 pop=  320 m=(1.00,0.27,0.50) cell=(7, 2, 5) | filled=29 best_pop=2613 best_fit=2623
+it  186 [cross]   fit=     3.9 pop=    0 m=(0.02,0.00,0.00) cell=(0, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  188 [mutat]   fit=   545.2 pop=  533 m=(0.95,0.32,0.24) cell=(7, 2, 2) | filled=29 best_pop=2613 best_fit=2623
+it  187 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  189 [mutat]   fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  191 [mutat]   fit=     5.8 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  190 [mutat]   fit=     5.1 pop=    0 m=(0.04,0.00,0.00) cell=(0, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  192 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  193 [cross]   fit=   771.9 pop=  727 m=(1.00,0.46,0.29) cell=(7, 3, 2) | filled=29 best_pop=2613 best_fit=2623
+it  195 [mutat]   fit=    10.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  194 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  196 [mutat]   fit=     2.8 pop=    0 m=(0.06,0.00,0.00) cell=(0, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  197 [mutat] + fit=  1272.0 pop= 1213 m=(0.99,0.61,0.27) cell=(7, 4, 2) | filled=29 best_pop=2613 best_fit=2623
+it  198 [mutat]   fit=    29.5 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  201 [mutat]   fit=    42.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=29 best_pop=2613 best_fit=2623
+it  199 [cross]   fit=     8.7 pop=    0 m=(0.94,0.00,0.24) cell=(7, 0, 2) | filled=29 best_pop=2613 best_fit=2623
+it  200 [mutat] + fit=    52.7 pop=    0 m=(0.84,0.00,0.00) cell=(6, 0, 0) | filled=30 best_pop=2613 best_fit=2623
+it  202 [mutat]   fit=     6.7 pop=    0 m=(1.00,0.00,0.25) cell=(7, 0, 2) | filled=30 best_pop=2613 best_fit=2623
+it  203 [mutat]   fit=   808.1 pop=  767 m=(0.99,0.56,0.20) cell=(7, 4, 2) | filled=30 best_pop=2613 best_fit=2623
+it  204 [mutat]   fit=     5.1 pop=    0 m=(0.12,0.00,0.00) cell=(0, 0, 0) | filled=30 best_pop=2613 best_fit=2623
+it  205 [mutat] + fit=    37.7 pop=    0 m=(0.60,0.00,0.00) cell=(4, 0, 0) | filled=30 best_pop=2613 best_fit=2623
+it  207 [mutat]   fit=   836.3 pop=  807 m=(0.99,0.61,0.30) cell=(7, 4, 2) | filled=30 best_pop=2613 best_fit=2623
+it  206 [mutat]   fit=   663.4 pop=  640 m=(0.99,0.39,0.35) cell=(7, 3, 3) | filled=30 best_pop=2613 best_fit=2623
+it  208 [cross]   fit=   462.0 pop=  427 m=(1.00,0.55,0.33) cell=(7, 4, 3) | filled=30 best_pop=2613 best_fit=2623
+it  209 [cross] + fit=   918.3 pop=  873 m=(0.95,0.20,0.22) cell=(7, 1, 2) | filled=30 best_pop=2613 best_fit=2623
+it  210 [cross]   fit=   773.6 pop=  733 m=(0.98,0.59,0.31) cell=(7, 4, 3) | filled=30 best_pop=2613 best_fit=2623
+it  212 [mutat] + fit=   184.9 pop=  167 m=(0.98,0.06,0.20) cell=(7, 0, 1) | filled=31 best_pop=2613 best_fit=2623
+it  211 [cross]   fit=     5.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  213 [mutat] + fit=    23.7 pop=    0 m=(0.36,0.00,0.00) cell=(2, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  214 [mutat]   fit=     6.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  215 [mutat]   fit=    33.0 pop=    0 m=(0.52,0.00,0.00) cell=(4, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  216 [mutat]   fit=   771.9 pop=  720 m=(0.98,0.67,0.26) cell=(7, 5, 2) | filled=31 best_pop=2613 best_fit=2623
+it  218 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  217 [cross]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  219 [mutat]   fit=    35.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  220 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  221 [mutat]   fit=   347.7 pop=  320 m=(0.96,0.17,0.22) cell=(7, 1, 2) | filled=31 best_pop=2613 best_fit=2623
+it  222 [mutat]   fit=     8.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  223 [mutat]   fit=   598.7 pop=  587 m=(1.00,0.41,0.30) cell=(7, 3, 2) | filled=31 best_pop=2613 best_fit=2623
+it  224 [mutat] invalid: init() is 35 lines; keep it <= 30 (~20 lines)
+it  225 [cross]   fit=   820.9 pop=  760 m=(1.00,0.58,0.27) cell=(7, 4, 2) | filled=31 best_pop=2613 best_fit=2623
+it  227 [mutat]   fit=    40.3 pop=    0 m=(0.98,0.00,0.25) cell=(7, 0, 2) | filled=31 best_pop=2613 best_fit=2623
+it  226 [mutat]   fit=    41.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  228 [cross] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  230 [mutat]   fit=     6.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  229 [mutat] invalid: init() is 35 lines; keep it <= 30 (~20 lines)
+it  231 [mutat]   fit=     6.3 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  233 [mutat]   fit=     5.8 pop=    0 m=(1.00,0.00,0.33) cell=(7, 0, 3) | filled=31 best_pop=2613 best_fit=2623
+it  232 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  234 [cross]   fit=    34.1 pop=    0 m=(0.52,0.00,0.00) cell=(4, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  235 [mutat] + fit=    15.6 pop=    0 m=(0.24,0.00,0.00) cell=(1, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  236 [cross]   fit=   505.2 pop=  473 m=(0.86,0.43,0.28) cell=(6, 3, 2) | filled=31 best_pop=2613 best_fit=2623
+it  237 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  238 [mutat]   fit=     4.6 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  239 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  240 [mutat]   fit=    24.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  241 [cross]   fit=     4.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  242 [cross] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  243 [mutat]   fit=     2.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  244 [mutat]   fit=     6.7 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  245 [mutat]   fit=   114.1 pop=  107 m=(0.96,0.04,0.24) cell=(7, 0, 2) | filled=31 best_pop=2613 best_fit=2623
+it  246 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  247 [mutat]   fit=   589.4 pop=  573 m=(0.99,0.33,0.31) cell=(7, 2, 3) | filled=31 best_pop=2613 best_fit=2623
+it  248 [cross]   fit=   345.6 pop=  320 m=(0.88,0.00,0.23) cell=(7, 0, 2) | filled=31 best_pop=2613 best_fit=2623
+it  249 [mutat]   fit=     3.9 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  250 [mutat]   fit=    16.5 pop=    0 m=(0.96,0.00,0.33) cell=(7, 0, 3) | filled=31 best_pop=2613 best_fit=2623
+it  251 [cross]   fit=   452.7 pop=  427 m=(1.00,0.29,0.28) cell=(7, 2, 2) | filled=31 best_pop=2613 best_fit=2623
+it  252 [cross]   fit=   935.2 pop=  887 m=(1.00,0.40,0.29) cell=(7, 3, 2) | filled=31 best_pop=2613 best_fit=2623
+it  253 [mutat]   fit=    28.4 pop=    0 m=(0.38,0.00,0.00) cell=(3, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  254 [cross]   fit=    64.0 pop=   53 m=(1.00,0.06,0.23) cell=(7, 0, 2) | filled=31 best_pop=2613 best_fit=2623
+it  255 [mutat]   fit=   546.9 pop=  533 m=(1.00,0.33,0.21) cell=(7, 2, 2) | filled=31 best_pop=2613 best_fit=2623
+it  256 [mutat]   fit=   745.0 pop=  720 m=(0.99,0.28,0.25) cell=(7, 2, 2) | filled=31 best_pop=2613 best_fit=2623
+it  257 [mutat]   fit=    72.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  258 [mutat]   fit=     4.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  260 [cross]   fit=     8.5 pop=    0 m=(1.00,0.00,0.25) cell=(7, 0, 2) | filled=31 best_pop=2613 best_fit=2623
+it  259 [mutat]   fit=    10.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  261 [mutat] + fit=   531.7 pop=  507 m=(0.96,0.08,0.36) cell=(7, 0, 3) | filled=31 best_pop=2613 best_fit=2623
+it  262 [mutat] + fit=   667.3 pop=  640 m=(0.99,0.24,0.33) cell=(7, 1, 3) | filled=31 best_pop=2613 best_fit=2623
+it  263 [mutat] invalid: init() is 35 lines; keep it <= 30 (~20 lines)
+it  264 [mutat] + fit=    31.9 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  265 [cross]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=31 best_pop=2613 best_fit=2623
+it  266 [cross]   fit=   499.3 pop=  473 m=(0.98,0.57,0.34) cell=(7, 4, 3) | filled=31 best_pop=2613 best_fit=2623
+it  267 [cross] + fit=   959.3 pop=  940 m=(0.94,0.48,0.34) cell=(7, 3, 3) | filled=31 best_pop=2613 best_fit=2623
+it  268 [mutat]   fit=   674.6 pop=  640 m=(0.99,0.32,0.31) cell=(7, 2, 3) | filled=31 best_pop=2613 best_fit=2623
+it  269 [mutat] + fit=     5.7 pop=    0 m=(1.00,0.00,0.50) cell=(7, 0, 5) | filled=32 best_pop=2613 best_fit=2623
+it  270 [mutat] invalid: init() is 35 lines; keep it <= 30 (~20 lines)
+it  271 [cross]   fit=   230.0 pop=  200 m=(1.00,0.29,0.29) cell=(7, 2, 2) | filled=32 best_pop=2613 best_fit=2623
+it  272 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=32 best_pop=2613 best_fit=2623
+it  273 [cross] + fit=   967.4 pop=  913 m=(0.97,0.70,0.29) cell=(7, 5, 2) | filled=32 best_pop=2613 best_fit=2623
+it  274 [mutat] + fit=    16.8 pop=    0 m=(0.24,0.00,0.00) cell=(1, 0, 0) | filled=32 best_pop=2613 best_fit=2623
+it  275 [cross]   fit=     5.7 pop=    0 m=(0.78,0.00,0.00) cell=(6, 0, 0) | filled=32 best_pop=2613 best_fit=2623
+it  276 [cross]   fit=   781.8 pop=  740 m=(0.90,0.61,0.29) cell=(7, 4, 2) | filled=32 best_pop=2613 best_fit=2623
+it  277 [mutat] + fit=     5.6 pop=    0 m=(1.00,0.00,1.00) cell=(7, 0, 9) | filled=33 best_pop=2613 best_fit=2623
+it  279 [mutat]   fit=    39.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=33 best_pop=2613 best_fit=2623
+it  278 [mutat]   fit=     2.9 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=33 best_pop=2613 best_fit=2623
+it  280 [mutat] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  281 [mutat]   fit=   861.4 pop=  800 m=(1.00,0.71,0.29) cell=(7, 5, 2) | filled=33 best_pop=2613 best_fit=2623
+it  282 [mutat]   fit=    15.6 pop=    0 m=(0.24,0.00,0.00) cell=(1, 0, 0) | filled=33 best_pop=2613 best_fit=2623
+it  283 [mutat] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  285 [cross]   fit=   678.7 pop=  633 m=(0.94,0.67,0.29) cell=(7, 5, 2) | filled=33 best_pop=2613 best_fit=2623
+it  284 [cross] + fit=   711.0 pop=  667 m=(0.96,0.79,0.23) cell=(7, 6, 2) | filled=34 best_pop=2613 best_fit=2623
+it  286 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  287 [mutat]   fit=     6.3 pop=    0 m=(0.14,0.00,0.00) cell=(1, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  288 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  289 [mutat] + fit=    10.4 pop=    0 m=(0.90,0.00,0.50) cell=(7, 0, 5) | filled=34 best_pop=2613 best_fit=2623
+it  290 [cross]   fit=   500.9 pop=  480 m=(0.92,0.51,0.35) cell=(7, 4, 3) | filled=34 best_pop=2613 best_fit=2623
+it  291 [mutat]   fit=   185.1 pop=  160 m=(0.94,0.00,0.20) cell=(7, 0, 2) | filled=34 best_pop=2613 best_fit=2623
+it  292 [mutat]   fit=    19.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  294 [mutat]   fit=    35.2 pop=    0 m=(0.58,0.00,0.00) cell=(4, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  293 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  295 [cross]   fit=   764.6 pop=  733 m=(0.98,0.71,0.22) cell=(7, 5, 2) | filled=34 best_pop=2613 best_fit=2623
+it  297 [mutat]   fit=   144.7 pop=  133 m=(0.99,0.19,0.27) cell=(7, 1, 2) | filled=34 best_pop=2613 best_fit=2623
+it  296 [mutat]   fit=    71.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  298 [mutat]   fit=     3.4 pop=    0 m=(0.76,0.00,0.00) cell=(6, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  299 [mutat]   fit=    35.4 pop=    0 m=(0.58,0.00,0.00) cell=(4, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  300 [mutat]   fit=     2.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  301 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  302 [mutat]   fit=     4.0 pop=    0 m=(0.30,0.00,0.00) cell=(2, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  303 [cross]   fit=   686.1 pop=  673 m=(1.00,0.28,0.24) cell=(7, 2, 2) | filled=34 best_pop=2613 best_fit=2623
+it  306 [cross]   fit=    14.1 pop=    0 m=(0.98,0.00,0.33) cell=(7, 0, 3) | filled=34 best_pop=2613 best_fit=2623
+it  304 [mutat] invalid: init() is 36 lines; keep it <= 30 (~20 lines)
+it  305 [cross]   fit=    14.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  307 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  308 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  309 [cross]   fit=    60.3 pop=   53 m=(1.00,0.04,0.30) cell=(7, 0, 3) | filled=34 best_pop=2613 best_fit=2623
+it  310 [mutat]   fit=   554.6 pop=  533 m=(0.96,0.35,0.29) cell=(7, 2, 2) | filled=34 best_pop=2613 best_fit=2623
+it  312 [mutat]   fit=    36.7 pop=    0 m=(0.97,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  311 [cross]   fit=     7.5 pop=    0 m=(0.08,0.00,0.00) cell=(0, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  313 [mutat]   fit=     5.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  315 [mutat]   fit=    47.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  314 [mutat]   fit=     5.3 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  318 [mutat]   fit=    47.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=34 best_pop=2613 best_fit=2623
+it  316 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  317 [mutat]   fit=   113.9 pop=  107 m=(1.00,0.04,0.29) cell=(7, 0, 2) | filled=34 best_pop=2613 best_fit=2623
+it  320 [mutat] + fit=   649.1 pop=  640 m=(1.00,0.33,0.47) cell=(7, 2, 4) | filled=35 best_pop=2613 best_fit=2623
+it  319 [mutat] + fit=   475.3 pop=  467 m=(0.75,0.49,0.25) cell=(5, 3, 2) | filled=36 best_pop=2613 best_fit=2623
+it  321 [mutat] + fit=    39.9 pop=    0 m=(0.58,0.00,0.00) cell=(4, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  323 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  324 [mutat]   fit=     4.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  322 [mutat]   fit=     5.7 pop=    0 m=(0.97,0.00,0.00) cell=(7, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  327 [cross]   fit=   168.5 pop=  160 m=(1.00,0.08,0.29) cell=(7, 0, 2) | filled=36 best_pop=2613 best_fit=2623
+it  326 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  325 [mutat]   fit=     5.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  328 [mutat]   fit=    36.4 pop=    0 m=(0.60,0.00,0.00) cell=(4, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  330 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=36 best_pop=2613 best_fit=2623
+it  329 [mutat] + fit=  1089.3 pop= 1067 m=(0.85,0.51,0.32) cell=(6, 4, 3) | filled=37 best_pop=2613 best_fit=2623
+it  332 [mutat] + fit=     5.6 pop=    0 m=(1.00,0.00,1.00) cell=(7, 0, 9) | filled=37 best_pop=2613 best_fit=2623
+it  331 [mutat]   fit=   279.6 pop=  267 m=(0.97,0.33,0.28) cell=(7, 2, 2) | filled=37 best_pop=2613 best_fit=2623
+it  333 [cross]   fit=   710.2 pop=  693 m=(0.99,0.13,0.24) cell=(7, 1, 2) | filled=37 best_pop=2613 best_fit=2623
+it  334 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  335 [mutat]   fit=    17.9 pop=    0 m=(0.28,0.00,0.00) cell=(2, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  336 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  337 [mutat]   fit=    47.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  338 [cross] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  339 [cross]   fit=    10.3 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  340 [mutat]   fit=    13.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  341 [mutat]   fit=     8.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=37 best_pop=2613 best_fit=2623
+it  342 [mutat]   fit=    10.6 pop=    0 m=(0.96,0.00,0.33) cell=(7, 0, 3) | filled=37 best_pop=2613 best_fit=2623
+it  343 [cross]   fit=     6.1 pop=    0 m=(1.00,0.00,0.22) cell=(7, 0, 2) | filled=37 best_pop=2613 best_fit=2623
+it  344 [mutat]   fit=   610.8 pop=  587 m=(0.97,0.54,0.33) cell=(7, 4, 3) | filled=37 best_pop=2613 best_fit=2623
+it  346 [mutat] + fit=    35.7 pop=    0 m=(0.99,0.41,0.00) cell=(7, 3, 0) | filled=38 best_pop=2613 best_fit=2623
+it  345 [mutat]   fit=   689.7 pop=  640 m=(1.00,0.62,0.29) cell=(7, 4, 2) | filled=38 best_pop=2613 best_fit=2623
+it  347 [mutat]   fit=    13.3 pop=    0 m=(0.18,0.00,0.00) cell=(1, 0, 0) | filled=38 best_pop=2613 best_fit=2623
+it  348 [cross]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=38 best_pop=2613 best_fit=2623
+it  349 [mutat]   fit=    10.4 pop=    0 m=(0.97,0.00,0.00) cell=(7, 0, 0) | filled=38 best_pop=2613 best_fit=2623
+it  350 [mutat] + fit=   973.6 pop=  933 m=(0.99,0.68,0.32) cell=(7, 5, 3) | filled=39 best_pop=2613 best_fit=2623
+it  351 [cross] invalid: init() is 39 lines; keep it <= 30 (~20 lines)
+it  352 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  353 [mutat]   fit=   280.8 pop=  267 m=(1.00,0.03,0.27) cell=(7, 0, 2) | filled=39 best_pop=2613 best_fit=2623
+it  355 [mutat]   fit=     4.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  354 [cross] + fit=  1004.3 pop=  967 m=(1.00,0.66,0.29) cell=(7, 5, 2) | filled=39 best_pop=2613 best_fit=2623
+it  356 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  357 [mutat] + fit=    24.9 pop=    0 m=(0.36,0.00,0.00) cell=(2, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  359 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  358 [mutat] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  360 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  361 [mutat] + fit=    12.8 pop=    0 m=(1.00,0.00,0.50) cell=(7, 0, 5) | filled=39 best_pop=2613 best_fit=2623
+it  362 [cross] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  363 [mutat]   fit=    36.4 pop=    0 m=(0.56,0.00,0.00) cell=(4, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  364 [cross]   fit=   997.5 pop=  940 m=(1.00,0.66,0.24) cell=(7, 5, 2) | filled=39 best_pop=2613 best_fit=2623
+it  365 [cross]   fit=     9.8 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=39 best_pop=2613 best_fit=2623
+it  366 [cross]   fit=    14.5 pop=    0 m=(1.00,0.00,0.27) cell=(7, 0, 2) | filled=39 best_pop=2613 best_fit=2623
+it  367 [mutat] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  368 [mutat]   fit=   563.5 pop=  533 m=(0.88,0.56,0.33) cell=(7, 4, 3) | filled=39 best_pop=2613 best_fit=2623
+it  370 [mutat] + fit=   781.2 pop=  767 m=(0.70,0.21,0.19) cell=(5, 1, 1) | filled=40 best_pop=2613 best_fit=2623
+it  369 [cross] + fit=    14.3 pop=    0 m=(0.06,0.00,0.00) cell=(0, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  372 [mutat]   fit=    72.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  371 [cross]   fit=     5.3 pop=    0 m=(0.26,0.00,0.00) cell=(2, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  373 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  374 [mutat]   fit=     5.3 pop=    0 m=(0.20,0.00,0.00) cell=(1, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  375 [mutat]   fit=    10.7 pop=    0 m=(0.95,0.09,0.26) cell=(7, 0, 2) | filled=40 best_pop=2613 best_fit=2623
+it  376 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.50) cell=(7, 0, 5) | filled=40 best_pop=2613 best_fit=2623
+it  377 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  378 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  379 [mutat]   fit=     4.0 pop=    0 m=(0.16,0.00,0.00) cell=(1, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  381 [cross]   fit=    10.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  380 [mutat]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  382 [mutat]   fit=   836.4 pop=  813 m=(0.99,0.40,0.27) cell=(7, 3, 2) | filled=40 best_pop=2613 best_fit=2623
+it  383 [mutat]   fit=    36.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  384 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  385 [mutat]   fit=    22.9 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  386 [mutat]   fit=   629.9 pop=  587 m=(0.98,0.66,0.23) cell=(7, 5, 2) | filled=40 best_pop=2613 best_fit=2623
+it  387 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=40 best_pop=2613 best_fit=2623
+it  388 [mutat]   fit=   186.2 pop=  160 m=(1.00,0.14,0.22) cell=(7, 1, 2) | filled=40 best_pop=2613 best_fit=2623
+it  390 [mutat] + fit=    51.8 pop=    0 m=(1.00,0.22,0.00) cell=(7, 1, 0) | filled=41 best_pop=2613 best_fit=2623
+it  389 [cross]   fit=   612.8 pop=  587 m=(0.97,0.11,0.24) cell=(7, 0, 2) | filled=41 best_pop=2613 best_fit=2623
+it  391 [mutat] invalid: init() is 36 lines; keep it <= 30 (~20 lines)
+it  392 [cross] + fit=   700.6 pop=  673 m=(0.81,0.75,0.27) cell=(6, 6, 2) | filled=42 best_pop=2613 best_fit=2623
+it  393 [cross]   fit=   773.8 pop=  747 m=(0.98,0.32,0.27) cell=(7, 2, 2) | filled=42 best_pop=2613 best_fit=2623
+it  394 [mutat]   fit=     5.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=42 best_pop=2613 best_fit=2623
+it  395 [mutat]   fit=    36.4 pop=    0 m=(0.58,0.00,0.00) cell=(4, 0, 0) | filled=42 best_pop=2613 best_fit=2623
+it  396 [mutat] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  397 [mutat]   fit=    28.3 pop=    0 m=(0.38,0.00,0.00) cell=(3, 0, 0) | filled=42 best_pop=2613 best_fit=2623
+it  398 [mutat] + fit=  1235.8 pop= 1207 m=(0.77,0.60,0.29) cell=(6, 4, 2) | filled=43 best_pop=2613 best_fit=2623
+it  399 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=43 best_pop=2613 best_fit=2623
+it  400 [mutat] + fit=    11.7 pop=    0 m=(0.68,0.00,0.33) cell=(5, 0, 3) | filled=44 best_pop=2613 best_fit=2623
+it  401 [cross]   fit=   989.2 pop=  933 m=(0.99,0.71,0.27) cell=(7, 5, 2) | filled=44 best_pop=2613 best_fit=2623
+it  402 [mutat]   fit=    36.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  403 [cross]   fit=   241.9 pop=  227 m=(1.00,0.06,0.21) cell=(7, 0, 2) | filled=44 best_pop=2613 best_fit=2623
+it  404 [mutat]   fit=    35.4 pop=    0 m=(0.58,0.00,0.00) cell=(4, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  405 [cross]   fit=     5.8 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  406 [mutat]   fit=     8.9 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  407 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  408 [cross]   fit=   418.4 pop=  407 m=(1.00,0.24,0.20) cell=(7, 1, 2) | filled=44 best_pop=2613 best_fit=2623
+it  409 [mutat]   fit=    56.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  410 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  411 [mutat]   fit=    51.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  412 [mutat]   fit=     5.6 pop=    0 m=(0.68,0.00,0.00) cell=(5, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  414 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  413 [cross]   fit=    11.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  415 [mutat]   fit=     2.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  416 [cross]   fit=   617.7 pop=  587 m=(1.00,0.46,0.32) cell=(7, 3, 3) | filled=44 best_pop=2613 best_fit=2623
+it  417 [cross]   fit=     5.7 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  418 [mutat]   fit=     7.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  419 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  420 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  421 [cross] + fit=   668.4 pop=  640 m=(0.74,0.46,0.24) cell=(5, 3, 2) | filled=44 best_pop=2613 best_fit=2623
+it  422 [cross]   fit=     2.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  423 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  424 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  426 [cross]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  425 [mutat] + fit=  1041.8 pop= 1020 m=(1.00,0.48,0.35) cell=(7, 3, 3) | filled=44 best_pop=2613 best_fit=2623
+it  427 [mutat]   fit=    11.9 pop=    0 m=(1.00,0.00,0.20) cell=(7, 0, 2) | filled=44 best_pop=2613 best_fit=2623
+it  428 [mutat]   fit=     5.8 pop=    0 m=(1.00,0.00,0.50) cell=(7, 0, 5) | filled=44 best_pop=2613 best_fit=2623
+it  429 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=44 best_pop=2613 best_fit=2623
+it  432 [mutat] + fit=     8.6 pop=    0 m=(0.13,0.00,0.25) cell=(1, 0, 2) | filled=45 best_pop=2613 best_fit=2623
+it  431 [mutat]   fit=     6.0 pop=    0 m=(1.00,0.00,0.25) cell=(7, 0, 2) | filled=45 best_pop=2613 best_fit=2623
+it  430 [cross]   fit=     7.4 pop=    0 m=(0.06,0.00,0.00) cell=(0, 0, 0) | filled=45 best_pop=2613 best_fit=2623
+it  433 [cross]   fit=    49.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=45 best_pop=2613 best_fit=2623
+it  434 [mutat]   fit=     7.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=45 best_pop=2613 best_fit=2623
+it  435 [mutat]   fit=    36.4 pop=    0 m=(0.56,0.00,0.00) cell=(4, 0, 0) | filled=45 best_pop=2613 best_fit=2623
+it  436 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  437 [mutat] + fit=   436.6 pop=  427 m=(1.00,0.23,1.00) cell=(7, 1, 9) | filled=46 best_pop=2613 best_fit=2623
+it  438 [cross]   fit=   781.7 pop=  727 m=(0.98,0.67,0.30) cell=(7, 5, 2) | filled=46 best_pop=2613 best_fit=2623
+it  439 [mutat]   fit=    31.8 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=46 best_pop=2613 best_fit=2623
+it  440 [mutat] invalid: init() is 34 lines; keep it <= 30 (~20 lines)
+it  441 [mutat]   fit=     5.1 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=46 best_pop=2613 best_fit=2623
+it  442 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=46 best_pop=2613 best_fit=2623
+it  444 [mutat] + fit=   989.9 pop=  973 m=(1.00,0.26,0.26) cell=(7, 2, 2) | filled=46 best_pop=2613 best_fit=2623
+it  443 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=46 best_pop=2613 best_fit=2623
+it  445 [mutat] + fit=   875.6 pop=  847 m=(1.00,0.82,0.27) cell=(7, 6, 2) | filled=46 best_pop=2613 best_fit=2623
+it  446 [cross]   fit=   814.8 pop=  793 m=(1.00,0.32,0.22) cell=(7, 2, 2) | filled=46 best_pop=2613 best_fit=2623
+it  447 [mutat] invalid: init() is 35 lines; keep it <= 30 (~20 lines)
+it  448 [mutat] + fit=   657.0 pop=  640 m=(0.84,0.33,0.42) cell=(6, 2, 4) | filled=47 best_pop=2613 best_fit=2623
+it  449 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  450 [cross]   fit=     4.5 pop=    0 m=(1.00,0.00,1.00) cell=(7, 0, 9) | filled=47 best_pop=2613 best_fit=2623
+it  451 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  452 [cross]   fit=     7.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  453 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  454 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  455 [mutat]   fit=     7.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  457 [cross]   fit=    82.0 pop=   67 m=(1.00,0.03,0.20) cell=(7, 0, 2) | filled=47 best_pop=2613 best_fit=2623
+it  456 [cross]   fit=     5.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  458 [cross]   fit=    23.8 pop=    0 m=(0.36,0.00,0.00) cell=(2, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  460 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  459 [mutat]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  461 [mutat] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  463 [mutat]   fit=    14.8 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  462 [mutat] invalid: init() is 31 lines; keep it <= 30 (~20 lines)
+it  464 [cross]   fit=     7.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  465 [mutat]   fit=     6.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  466 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  467 [mutat] + fit=    10.6 pop=    0 m=(0.82,0.00,0.33) cell=(6, 0, 3) | filled=47 best_pop=2613 best_fit=2623
+it  468 [cross]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  469 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=47 best_pop=2613 best_fit=2623
+it  470 [mutat] + fit=   655.5 pop=  640 m=(0.84,0.09,1.00) cell=(6, 0, 9) | filled=48 best_pop=2613 best_fit=2623
+it  472 [mutat] + fit=  1195.8 pop= 1153 m=(0.98,0.53,0.18) cell=(7, 4, 1) | filled=49 best_pop=2613 best_fit=2623
+it  473 [cross]   fit=     9.2 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=49 best_pop=2613 best_fit=2623
+it  471 [mutat] invalid: init() is 37 lines; keep it <= 30 (~20 lines)
+it  474 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=49 best_pop=2613 best_fit=2623
+it  475 [mutat]   fit=    24.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=49 best_pop=2613 best_fit=2623
+it  476 [cross]   fit=     2.8 pop=    0 m=(0.10,0.00,0.00) cell=(0, 0, 0) | filled=49 best_pop=2613 best_fit=2623
+it  478 [mutat]   fit=    11.0 pop=    0 m=(0.96,0.00,0.33) cell=(7, 0, 3) | filled=49 best_pop=2613 best_fit=2623
+it  477 [mutat]   fit=    12.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=49 best_pop=2613 best_fit=2623
+it  479 [mutat] + fit=  1196.9 pop= 1167 m=(0.81,0.66,0.31) cell=(6, 5, 3) | filled=50 best_pop=2613 best_fit=2623
+it  480 [mutat]   fit=     4.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=50 best_pop=2613 best_fit=2623
+it  481 [mutat]   fit=    10.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=50 best_pop=2613 best_fit=2623
+it  482 [cross]   fit=   393.3 pop=  380 m=(1.00,0.02,0.21) cell=(7, 0, 2) | filled=50 best_pop=2613 best_fit=2623
+it  483 [cross]   fit=    11.4 pop=    0 m=(1.00,0.13,0.28) cell=(7, 1, 2) | filled=50 best_pop=2613 best_fit=2623
+it  484 [cross]   fit=     9.8 pop=    0 m=(0.98,0.00,0.27) cell=(7, 0, 2) | filled=50 best_pop=2613 best_fit=2623
+it  486 [mutat]   fit=     8.9 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=50 best_pop=2613 best_fit=2623
+it  485 [cross] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  487 [mutat] + fit=   606.2 pop=  587 m=(0.70,0.38,1.00) cell=(5, 3, 9) | filled=51 best_pop=2613 best_fit=2623
+it  488 [mutat]   fit=     8.0 pop=    0 m=(0.92,0.00,0.00) cell=(7, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  489 [cross]   fit=    10.8 pop=    0 m=(0.90,0.00,0.33) cell=(7, 0, 3) | filled=51 best_pop=2613 best_fit=2623
+it  490 [cross]   fit=     5.1 pop=    0 m=(0.02,0.00,0.00) cell=(0, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  491 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  492 [cross] + fit=   140.1 pop=  120 m=(0.72,0.04,0.31) cell=(5, 0, 3) | filled=51 best_pop=2613 best_fit=2623
+it  493 [mutat]   fit=    27.2 pop=    0 m=(0.40,0.00,0.00) cell=(3, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  494 [mutat]   fit=    11.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  495 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  496 [mutat] + fit=    35.7 pop=    0 m=(1.00,0.49,0.00) cell=(7, 3, 0) | filled=51 best_pop=2613 best_fit=2623
+it  497 [mutat] invalid: init() is 37 lines; keep it <= 30 (~20 lines)
+it  498 [mutat]   fit=     5.9 pop=    0 m=(0.04,0.00,0.00) cell=(0, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  499 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=51 best_pop=2613 best_fit=2623
+it  500 [cross]   fit=   810.5 pop=  747 m=(1.00,0.61,0.24) cell=(7, 4, 2) | filled=51 best_pop=2613 best_fit=2623
+it  501 [mutat] + fit=   169.2 pop=  160 m=(1.00,0.17,0.49) cell=(7, 1, 4) | filled=52 best_pop=2613 best_fit=2623
+it  502 [mutat]   fit=    16.2 pop=    0 m=(1.00,0.00,0.33) cell=(7, 0, 3) | filled=52 best_pop=2613 best_fit=2623
+it  504 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=52 best_pop=2613 best_fit=2623
+it  503 [cross]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=52 best_pop=2613 best_fit=2623
+it  505 [mutat]   fit=     4.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=52 best_pop=2613 best_fit=2623
+it  506 [mutat]   fit=     5.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=52 best_pop=2613 best_fit=2623
+it  507 [mutat] + fit=   564.5 pop=  533 m=(0.55,0.20,1.00) cell=(4, 1, 9) | filled=53 best_pop=2613 best_fit=2623
+it  508 [mutat]   fit=     4.9 pop=    0 m=(0.09,0.00,0.00) cell=(0, 0, 0) | filled=53 best_pop=2613 best_fit=2623
+it  509 [cross] + fit=   602.9 pop=  587 m=(0.98,0.24,0.47) cell=(7, 1, 4) | filled=53 best_pop=2613 best_fit=2623
+it  510 [mutat] + fit=    11.4 pop=    0 m=(0.74,0.00,1.00) cell=(5, 0, 9) | filled=54 best_pop=2613 best_fit=2623
+it  511 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  512 [mutat]   fit=    12.5 pop=    0 m=(0.98,0.00,0.33) cell=(7, 0, 3) | filled=54 best_pop=2613 best_fit=2623
+it  513 [mutat]   fit=  1092.7 pop= 1053 m=(0.94,0.60,0.29) cell=(7, 4, 2) | filled=54 best_pop=2613 best_fit=2623
+it  514 [mutat] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  515 [mutat]   fit=    13.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=54 best_pop=2613 best_fit=2623
+it  516 [mutat]   fit=    19.1 pop=    0 m=(0.26,0.00,0.00) cell=(2, 0, 0) | filled=54 best_pop=2613 best_fit=2623
+it  517 [mutat]   fit=    35.3 pop=    0 m=(0.56,0.00,0.00) cell=(4, 0, 0) | filled=54 best_pop=2613 best_fit=2623
+it  518 [mutat]   fit=    17.9 pop=    0 m=(0.28,0.00,0.00) cell=(2, 0, 0) | filled=54 best_pop=2613 best_fit=2623
+it  519 [mutat]   fit=    12.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=54 best_pop=2613 best_fit=2623
+it  520 [mutat] + fit=   966.6 pop=  933 m=(0.82,0.70,0.25) cell=(6, 5, 2) | filled=55 best_pop=2613 best_fit=2623
+it  521 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  522 [mutat]   fit=   880.4 pop=  840 m=(0.99,0.74,0.27) cell=(7, 5, 2) | filled=55 best_pop=2613 best_fit=2623
+it  523 [mutat]   fit=    32.2 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  524 [mutat]   fit=    10.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  526 [cross]   fit=     8.1 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  525 [cross]   fit=   933.4 pop=  900 m=(0.99,0.38,0.24) cell=(7, 3, 2) | filled=55 best_pop=2613 best_fit=2623
+it  527 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  528 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  529 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  531 [mutat]   fit=     9.1 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  532 [mutat]   fit=    33.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  530 [mutat] KILLED open-loop: cf=0.00 div=0.00 pop=0
+it  533 [cross]   fit=    36.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  535 [mutat] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  534 [cross]   fit=     9.9 pop=    0 m=(0.98,0.00,0.25) cell=(7, 0, 2) | filled=55 best_pop=2613 best_fit=2623
+it  536 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it  537 [mutat]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  538 [mutat]   fit=    10.9 pop=    0 m=(1.00,0.00,0.29) cell=(7, 0, 2) | filled=55 best_pop=2613 best_fit=2623
+it  541 [mutat]   fit=    54.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  539 [mutat]   fit=   600.2 pop=  587 m=(0.95,0.50,0.47) cell=(7, 4, 4) | filled=55 best_pop=2613 best_fit=2623
+it  540 [mutat]   fit=   601.9 pop=  587 m=(0.99,0.41,0.39) cell=(7, 3, 3) | filled=55 best_pop=2613 best_fit=2623
+it  542 [mutat]   fit=    62.1 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  544 [mutat]   fit=     5.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  543 [mutat]   fit=     9.2 pop=    0 m=(0.64,0.00,0.00) cell=(5, 0, 0) | filled=55 best_pop=2613 best_fit=2623
+it  545 [mutat]   fit=   809.0 pop=  747 m=(1.00,0.66,0.21) cell=(7, 5, 2) | filled=55 best_pop=2613 best_fit=2623
+it  546 [mutat] + fit=   659.7 pop=  640 m=(1.00,0.50,0.65) cell=(7, 4, 6) | filled=56 best_pop=2613 best_fit=2623
+it  547 [mutat]   fit=     6.8 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  548 [mutat]   fit=   614.6 pop=  587 m=(1.00,0.61,0.32) cell=(7, 4, 3) | filled=56 best_pop=2613 best_fit=2623
+it  549 [mutat]   fit=     5.7 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  550 [cross]   fit=     8.7 pop=    0 m=(0.20,0.00,0.00) cell=(1, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  551 [cross]   fit=    31.8 pop=    0 m=(0.48,0.00,0.00) cell=(3, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  552 [mutat]   fit=   301.5 pop=  267 m=(0.97,0.25,0.24) cell=(7, 2, 2) | filled=56 best_pop=2613 best_fit=2623
+it  553 [mutat]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  554 [mutat]   fit=    26.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=56 best_pop=2613 best_fit=2623
+it  555 [mutat]   fit=   398.0 pop=  373 m=(0.98,0.22,0.24) cell=(7, 1, 2) | filled=56 best_pop=2613 best_fit=2623
+it  556 [mutat]   fit=   489.2 pop=  467 m=(1.00,0.13,0.19) cell=(7, 1, 1) | filled=56 best_pop=2613 best_fit=2623
+it  557 [cross] + fit=    30.1 pop=    0 m=(0.74,0.00,0.50) cell=(5, 0, 5) | filled=57 best_pop=2613 best_fit=2623
+it  558 [cross]   fit=     5.7 pop=    0 m=(0.91,0.00,0.25) cell=(7, 0, 2) | filled=57 best_pop=2613 best_fit=2623
+it  559 [mutat]   fit=    13.8 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=57 best_pop=2613 best_fit=2623
+it  560 [mutat]   fit=    10.2 pop=    0 m=(1.00,0.00,0.25) cell=(7, 0, 2) | filled=57 best_pop=2613 best_fit=2623
+it  562 [cross]   fit=   609.5 pop=  587 m=(1.00,0.55,0.47) cell=(7, 4, 4) | filled=57 best_pop=2613 best_fit=2623
+it  561 [mutat]   fit=   556.7 pop=  533 m=(0.97,0.17,0.24) cell=(7, 1, 2) | filled=57 best_pop=2613 best_fit=2623
+it  563 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=57 best_pop=2613 best_fit=2623
+it  565 [mutat] + fit=     9.5 pop=    0 m=(0.78,0.00,0.20) cell=(6, 0, 2) | filled=58 best_pop=2613 best_fit=2623
+it  564 [mutat]   fit=     8.6 pop=    0 m=(0.08,0.00,0.00) cell=(0, 0, 0) | filled=58 best_pop=2613 best_fit=2623
+it  566 [mutat] invalid: init() is 33 lines; keep it <= 30 (~20 lines)
+it  567 [mutat]   fit=     3.4 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=58 best_pop=2613 best_fit=2623
+it  568 [mutat]   fit=     6.2 pop=    0 m=(0.12,0.00,0.00) cell=(0, 0, 0) | filled=58 best_pop=2613 best_fit=2623
+it  569 [mutat]   fit=     4.5 pop=    0 m=(0.97,0.00,0.00) cell=(7, 0, 0) | filled=58 best_pop=2613 best_fit=2623
+it  570 [mutat]   fit=   421.0 pop=  387 m=(0.99,0.19,0.35) cell=(7, 1, 3) | filled=58 best_pop=2613 best_fit=2623
+it  571 [mutat]   fit=   610.1 pop=  587 m=(0.93,0.34,0.47) cell=(7, 2, 4) | filled=58 best_pop=2613 best_fit=2623
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=cl_ind archive=8x8 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=3 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_clind_ambition_generations.jsonl
+  RESUMED from results/elm_clind_ambition.npz: 58 elites, best_pop=2613, continuing at iter 572
+  killing fully open-loop genomes: max(cf, divergence) <= 0.0
+it  573 [cross]   fit=    49.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=58 best_pop=2613 best_fit=2623
+it  572 [mutat]   fit=   813.8 pop=  793 m=(0.99,0.23,0.29) cell=(7, 1, 2) | filled=58 best_pop=2613 best_fit=2623
+it  574 [mutat]   fit=   344.6 pop=  320 m=(0.97,0.19,0.29) cell=(7, 1, 2) | filled=58 best_pop=2613 best_fit=2623
