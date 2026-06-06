@@ -604,3 +604,12 @@ it  591 [cross]   fit=   618.7 pop=  587 m=(0.90,0.40,0.28) cell=(7, 3, 2) | fil
 it  592 [cross]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=61 best_pop=2613 best_fit=2623
 it  593 [cross]   fit=   893.8 pop=  833 m=(0.98,0.74,0.24) cell=(7, 5, 2) | filled=61 best_pop=2613 best_fit=2623
 it  594 [mutat] + fit=   494.4 pop=  480 m=(0.73,0.36,0.28) cell=(5, 2, 2) | filled=62 best_pop=2613 best_fit=2623
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=cl_ind archive=8x8 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=3 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_clind_ambition_generations.jsonl
+  RESUMED from results/elm_clind_ambition.npz: 61 elites, best_pop=2613, continuing at iter 595
+  killing fully open-loop genomes: max(cf, divergence) <= 0.0
+it  595 [mutat] + fit=   930.0 pop=  907 m=(0.60,0.36,0.27) cell=(4, 2, 2) | filled=62 best_pop=2613 best_fit=2623
+it  597 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
+it  596 [cross]   fit=   644.9 pop=  627 m=(1.00,0.69,0.21) cell=(7, 5, 2) | filled=62 best_pop=2613 best_fit=2623
