@@ -613,3 +613,8 @@ ELM: operator=claude model=claude-sonnet-4-6
 it  595 [mutat] + fit=   930.0 pop=  907 m=(0.60,0.36,0.27) cell=(4, 2, 2) | filled=62 best_pop=2613 best_fit=2623
 it  597 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
 it  596 [cross]   fit=   644.9 pop=  627 m=(1.00,0.69,0.21) cell=(7, 5, 2) | filled=62 best_pop=2613 best_fit=2623
+it  598 [mutat]   fit=     4.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
+it  600 [cross]   fit=     3.4 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
+it  599 [cross]   fit=   657.9 pop=  640 m=(0.98,0.52,0.25) cell=(7, 4, 2) | filled=62 best_pop=2613 best_fit=2623
+it  601 [mutat]   fit=     3.5 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
+it  602 [cross]   fit=     6.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=62 best_pop=2613 best_fit=2623
