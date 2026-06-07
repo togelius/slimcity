@@ -108,3 +108,31 @@ thousands, not hundreds. The "missing something" relative to a real city is
 **map size and the engine's density model**, not strategy — we've now pushed the
 strategy levers (power → density → roads → land value) close to this map's
 ceiling.
+
+---
+
+## Closed-loop rewrite of `metropolis` (`metropolis_cl`)
+
+Asked to rewrite the open-loop blueprint as a closed-loop policy. The faithful
+rewrite keeps the *same target layout* but `act()` **reads `obs` every step and
+places the first target tile not yet present on the observed map** (no stored
+index — so the action genuinely depends on what's observed). It is genuinely
+reactive: **cf_sensitivity ≈ 1.0** (it survives the `--min-reactivity` kill
+filter).
+
+**Result: sustained cityPop ≈ 3,300 — about 10× *below* the open-loop metropolis
+(~37,000), at the same budget.** Why: the open-loop city's population depends on
+a precise **one-pass placement order** (place everything once, then stabilise).
+The engine's **auto-bulldoze** means a reactive scan re-touches overlapping
+tiles — road rows clip zones and wire spines, bulldozed tiles read as "missing"
+and get re-placed, and zones never settle long enough to densify. Keeping roads
+off the spines and adding a done-set didn't move it (~3,300 either way).
+
+**Takeaway:** ~3,300 is the *closed-loop ceiling* on this engine — it still
+beats every *evolved* closed-loop policy (seed 3,150 at the same big budget), but
+the open-loop blueprint's 37k is structurally out of reach for a reactive
+controller here. This is the cleanest statement of the whole investigation's
+theme: **on this simulator, committing to a global layout (open-loop) beats
+deciding tile-by-tile (closed-loop)** — by an order of magnitude, even when the
+closed-loop policy is handed the winning layout to reproduce.
+Source: `results/best_policy_metropolis_cl.py` / `metropolis_cl` seed.

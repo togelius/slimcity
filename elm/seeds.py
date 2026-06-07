@@ -298,6 +298,7 @@ def act(obs, state):
 from elm.seed_clind import SEED_CLIND_CHAMP   # closed-loop champ (~2480) from elm_clind_react
 from elm.seed_megacity import SEED_MEGACITY    # hand-designed open-loop champ (~14.4k sustained)
 from elm.seed_metropolis import SEED_METROPOLIS # road+land-value champ v2 (~36k sustained)
+from elm.seed_metropolis_cl import SEED_METROPOLIS_CL  # closed-loop rewrite (~3.3k, cf~1.0)
 
 SEEDS = {
     "plan": SEED_PLAN,
@@ -305,6 +306,7 @@ SEEDS = {
     "clind_champ": SEED_CLIND_CHAMP,      # reactive champion to seed the follow-up run
     "megacity": SEED_MEGACITY,            # dense-residential + nuclear blueprint
     "metropolis": SEED_METROPOLIS,        # + roads + parks (best city, ~36k)
+    "metropolis_cl": SEED_METROPOLIS_CL,  # closed-loop rewrite of metropolis (~3.3k)
     "reactive": SEED_REACTIVE,            # closed-loop founder (residential-extend)
     "industrial": SEED_INDUSTRIAL,
     "commercial": SEED_COMMERCIAL,
