@@ -1960,3 +1960,34 @@ ELM: operator=claude model=claude-sonnet-4-6
 it 1917 [cross]   fit=   650.6 pop=  640 m=(0.94,0.44,0.74) cell=(7, 3, 7) | filled=162 best_pop=2613 best_fit=2623
 it 1918 [mutat] invalid: init() is 43 lines; keep it <= 30 (~20 lines)
 it 1916 [mutat]   fit=     8.0 pop=    0 m=(0.54,0.00,0.25) cell=(4, 0, 2) | filled=162 best_pop=2613 best_fit=2623
+it 1920 [cross]   fit=     2.3 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=162 best_pop=2613 best_fit=2623
+it 1919 [mutat]   fit=   556.7 pop=  533 m=(0.90,0.28,0.42) cell=(7, 2, 4) | filled=162 best_pop=2613 best_fit=2623
+it 1921 [cross]   fit=    10.6 pop=    0 m=(0.46,0.00,0.25) cell=(3, 0, 2) | filled=162 best_pop=2613 best_fit=2623
+it 1922 [mutat]   fit=   558.1 pop=  533 m=(0.94,0.48,1.00) cell=(7, 3, 9) | filled=162 best_pop=2613 best_fit=2623
+it 1923 [cross]   fit=     6.9 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=162 best_pop=2613 best_fit=2623
+it 1924 [mutat]   fit=     4.7 pop=    0 m=(0.86,0.00,0.33) cell=(6, 0, 3) | filled=162 best_pop=2613 best_fit=2623
+it 1925 [mutat] invalid: init() is 32 lines; keep it <= 30 (~20 lines)
+it 1926 [mutat]   fit=     5.7 pop=    0 m=(0.74,0.00,0.50) cell=(5, 0, 5) | filled=162 best_pop=2613 best_fit=2623
+it 1927 [cross] + fit=   175.8 pop=  160 m=(0.34,0.23,0.40) cell=(2, 1, 4) | filled=163 best_pop=2613 best_fit=2623
+it 1928 [mutat]   fit=     2.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1929 [mutat]   fit=   222.9 pop=  213 m=(1.00,0.39,0.31) cell=(7, 3, 3) | filled=163 best_pop=2613 best_fit=2623
+it 1930 [mutat]   fit=     8.0 pop=    0 m=(0.60,0.00,0.50) cell=(4, 0, 5) | filled=163 best_pop=2613 best_fit=2623
+it 1931 [mutat]   fit=     2.3 pop=    0 m=(0.90,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1932 [mutat]   fit=   811.4 pop=  800 m=(0.83,0.33,0.23) cell=(6, 2, 2) | filled=163 best_pop=2613 best_fit=2623
+it 1933 [cross]   fit=    17.4 pop=    0 m=(1.00,0.00,0.33) cell=(7, 0, 3) | filled=163 best_pop=2613 best_fit=2623
+it 1934 [cross]   fit=     2.9 pop=    0 m=(0.02,0.00,0.00) cell=(0, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1935 [cross]   fit=    62.4 pop=   53 m=(0.93,0.02,0.33) cell=(7, 0, 3) | filled=163 best_pop=2613 best_fit=2623
+it 1936 [cross]   fit=    17.3 pop=    0 m=(0.94,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1937 [cross]   fit=   502.9 pop=  480 m=(0.97,0.20,1.00) cell=(7, 1, 9) | filled=163 best_pop=2613 best_fit=2623
+it 1938 [mutat]   fit=   615.8 pop=  587 m=(0.94,0.46,1.00) cell=(7, 3, 9) | filled=163 best_pop=2613 best_fit=2623
+it 1939 [mutat]   fit=     5.7 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1940 [mutat]   fit=     7.1 pop=    0 m=(0.66,0.00,0.25) cell=(5, 0, 2) | filled=163 best_pop=2613 best_fit=2623
+it 1941 [mutat]   fit=    11.5 pop=    0 m=(0.92,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1942 [mutat]   fit=     9.2 pop=    0 m=(0.62,0.00,0.00) cell=(4, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+it 1943 [mutat]   fit=     9.2 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=163 best_pop=2613 best_fit=2623
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=cl_ind archive=8x8 n_actions=120 ticks/action=100
+  base_seed=42 n_evals=3 (avg over rolls); sandbox=on (15.0s)
+  logging every generation -> results/elm_clind_ambition_generations.jsonl
+  RESUMED from results/elm_clind_ambition.npz: 163 elites, best_pop=2613, continuing at iter 1944
+  killing fully open-loop genomes: max(cf, divergence) <= 0.0
