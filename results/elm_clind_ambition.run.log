@@ -1991,3 +1991,6 @@ ELM: operator=claude model=claude-sonnet-4-6
   logging every generation -> results/elm_clind_ambition_generations.jsonl
   RESUMED from results/elm_clind_ambition.npz: 163 elites, best_pop=2613, continuing at iter 1944
   killing fully open-loop genomes: max(cf, divergence) <= 0.0
+it 1944 [mutat]   fit=    11.7 pop=    0 m=(0.90,0.00,0.25) cell=(7, 0, 2) | filled=163 best_pop=2613 best_fit=2623
+it 1945 [cross]   fit=   440.4 pop=  427 m=(0.95,0.29,0.74) cell=(7, 2, 7) | filled=163 best_pop=2613 best_fit=2623
+it 1946 [mutat]   fit=   291.8 pop=  267 m=(0.32,0.03,0.49) cell=(2, 0, 4) | filled=163 best_pop=2613 best_fit=2623
