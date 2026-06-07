@@ -71,3 +71,40 @@ while True:
     env.place(*a)
 env.tick(150000); print(env.stats.city_pop)
 ```
+
+---
+
+## v2: `metropolis` — the road + land-value strategy (~36,000)
+
+A second pass under a deliberately *different* strategy. The megacity's flaw:
+zones were power-served but **road-starved**, stuck at low density (~17
+people/zone). Fix = give every zone **road access**, then raise **land value**:
+
+| intervention (on a fixed R block) | sustained cityPop |
+|---|---:|
+| baseline (megacity-style, wires only) | 11,273 |
+| + parks only (no roads) | 9,091 *(worse)* |
+| + police only | 11,084 |
+| **+ roads (every zone row)** | **20,602** |
+| **+ roads + parks + police** | **28,384** |
+| tuned `metro 30×28` (final) | **36,237** (5-seed, 35.4k–37.7k) |
+
+**Findings:** (1) **Road access is the dominant missing lever** — it ~doubled
+population by letting zones densify. (2) **Parks help only *with* roads** (land
+value pays off once density can rise; alone they just cost zones). (3) Pure
+residential still wins; industrial pollution craters it. (4) Police gives a
+small land-value bump. Final recipe: 30×28 R block (3-pitch), wire spine every
+4th col + 18 nuclear plants, a road row per zone row, a park every 5th cell,
+10 police. Source: `results/best_policy_metropolis.py` / `metropolis` seed.
+
+![metropolis](docs/metropolis.png)
+
+## On reaching 500k
+
+We went 4,460 → 14,400 → **36,000** by fixing power, then density, then road
+access + land value. But **500k is out of reach on this engine**: the map is
+120×100 ≈ 12,000 tiles (≲1,300 zones max), and even maxed that caps tens of
+thousands, not hundreds. The "missing something" relative to a real city is
+**map size and the engine's density model**, not strategy — we've now pushed the
+strategy levers (power → density → roads → land value) close to this map's
+ceiling.
