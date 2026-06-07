@@ -1959,3 +1959,4 @@ ELM: operator=claude model=claude-sonnet-4-6
   killing fully open-loop genomes: max(cf, divergence) <= 0.0
 it 1917 [cross]   fit=   650.6 pop=  640 m=(0.94,0.44,0.74) cell=(7, 3, 7) | filled=162 best_pop=2613 best_fit=2623
 it 1918 [mutat] invalid: init() is 43 lines; keep it <= 30 (~20 lines)
+it 1916 [mutat]   fit=     8.0 pop=    0 m=(0.54,0.00,0.25) cell=(4, 0, 2) | filled=162 best_pop=2613 best_fit=2623
