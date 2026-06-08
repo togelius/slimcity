@@ -16,6 +16,14 @@ deciding what to try.
 > diverse-seed 4,460 (replay mean 4,085, see [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md)),
 > 148-iter 1,792. Cross-method context in [SUMMARY.md](SUMMARY.md). The metric
 > box below is the best *CMA-ES / layout* city (ELM excluded).
+>
+> **Hand-constructed record (not evolved): ~40,620.** Tiling the champion's
+> dense R+C motif across the *whole* map (commercial supplies the jobs that
+> let residential grow; industry's pollution collapses it) ~2.6×'s the evolved
+> champion — the bottleneck was map coverage, not the optimizer. Starting from
+> a water+forest map did *not* help (~32k: higher land value but water wastes
+> ~40% of buildable area). See [TILING_AND_TERRAIN.md](TILING_AND_TERRAIN.md);
+> render `docs/champions/tiled_rrrc_40k.{png,gif}`.
 
 Best deterministic city grown from a blank map:
 
