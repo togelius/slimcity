@@ -5,22 +5,28 @@ deciding what to try.
 
 ## Headline
 
-> **Overall champion: ELM diverse-seed run, cityPop ≈ 4,460** (replay mean
-> 4,085), ~2.4× the layout/ELM records below. It's an **open-loop blueprint**
-> evolved as Python source — 0 of 84 archive elites are closed-loop. Full
-> analysis in [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md); cross-method context in
-> [SUMMARY.md](SUMMARY.md). The table below is the best *CMA-ES / layout* city.
+> **Overall champion: ELM `cl_ind` run (`elm_clind_long`), cityPop 14,908**
+> (robust mean of 5 rolls; **15,380** on a fresh single replay) — ~8× the best
+> CMA-ES/layout city and ~3.3× the prior ELM record. Evolved as Python source
+> by Claude (mutation+crossover), 15,000 iterations, 417 archive elites;
+> champion found at iter 9308. Like every peak here it's effectively an
+> **open-loop blueprint** (traj_divergence 0.00) — a dense, fully-powered,
+> road-connected residential cross. Real-tile render:
+> `docs/champions/elm_clind_long_15k.{png,gif}`. Earlier ELM milestones:
+> diverse-seed 4,460 (replay mean 4,085, see [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md)),
+> 148-iter 1,792. Cross-method context in [SUMMARY.md](SUMMARY.md). The metric
+> box below is the best *CMA-ES / layout* city (ELM excluded).
 
 Best deterministic city grown from a blank map:
 
 | metric                                 | best |
 | -------------------------------------- | ---- |
-| **cityPop (replay)**                   | **2,120** |
-| zones grown                            | **82 R + 0 C + 1 I**    |
-| representation                         | `layout` warm-start (`cont500`) |
+| **cityPop (replay)**                   | **2,760** (stored obj 3,756; replay varies 1,980–2,760) |
+| representation                         | `layout`, weekend run |
 | total params                           | 3,751 |
 | fitness mode                           | `dense` |
-| archive                                | 40 × 40 (`exp_2026-06-03_layout_resind_50k_cont500`) |
+| archive                                | 50 × 50, 34,607 gens (`weekend_layout_resind`) |
+| prior best                             | 2,120 — `layout` cont500 warm-start (40×40) |
 
 The previous best — `tape@600` with 1,120 cityPop — held for the
 overnight batch and was beaten by the layout-evolution experiment
@@ -32,6 +38,11 @@ Best `cityPop` per representation (with the deterministic engine):
 
 | representation             | best cityPop | obj_max | params  | notes |
 | -------------------------- | -----------: | ------: | ------: | ----- |
+| **ELM `clind_long`** (cl_ind, 15k iters) | **14,908** | 14,941 | code | robust mean of 5 rolls; **15,380** single replay — **overall champion**, dense R cross |
+| ELM `clind_react` (cl_ind) | 5,380 | 5,400 | code | reactive variant; replay ~4,280 |
+| ELM `diverse` (1.16k iters) | 4,460 | 4,516 | code | open-loop blueprint; replay mean 4,085 |
+| ELM `clind_fine` (cl_ind) | 4,280 | 4,289 | code | finer cl_ind grid |
+| ELM `resind` v2 (sonnet) | 2,668 | 2,691 | code | earlier res_ind ELM |
 | `tape` @100                |          480 |   508.9 |    300  | 3 ind zones |
 | `tape` @200                |          640 |   681.8 |    600  | 4 ind zones |
 | `tape` @300 growth ec      |          660 |   701.2 |    900  | **R+I mix at only 300 actions** (entropy_count curriculum) |
@@ -52,7 +63,8 @@ Best `cityPop` per representation (with the deterministic engine):
 | `rich_deepconv` (16,32) varied 40g | 0 |   104.2 |    12k  | same |
 | `deepconv` (32,64)         |            0 |    63.3 |    31k  | bonuses only — worse with more params |
 | `mlp` (h=32 / h=64)        |            0 |   10–12 | 78–155k | hopeless in our eval budget |
-| **`layout` cont500 warm-start** |    **2,120** | 2,949.9 |  3,751  | **500g from 50k archive; replay #3/#4 elite** |
+| **`layout` weekend 50×50** |    **2,760** | 3,755.9 |  3,751  | **34,607 gens, 210 elites; best CMA/layout; replay 1,980–2,760** |
+| `layout` cont500 warm-start |        2,120 | 2,949.9 |  3,751  | 500g from 50k archive; replay #3/#4 elite |
 | `layout` ticks200k 20k           |        1,880 | 2,529.5 |  3,751  | 200k stabilization; replay #4 elite |
 | `layout` `res_ind` 50k           |        1,820 | 2,526.9 |  3,751  | 50k-eval run on M4 |
 | `layout` `res_ind` 10k     |        1,680 | 2,255.2 |  3,751  | first layout milestone, see [LAYOUTS.md](LAYOUTS.md) |

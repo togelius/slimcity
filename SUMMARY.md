@@ -9,8 +9,8 @@ For the layout deep-dive, see `LAYOUTS.md`.
 
 | family | what evolves | typical params | best replay cityPop | typical wall time |
 |---|---|---:|---:|---:|
-| **Layout evolution** | The city itself (categorical 30×25 grid + tax) | 3,751 | **1,680** (50k evals: 1,820) | **11 min** |
-| **ELM** (code-genome) | **Python source code** for `act(obs, state)`, mutated/crossed by Claude | N/A (tokens) | **4,460** (diverse-seed run; prior 1,792) | hundreds–thousands of LLM calls |
+| **Layout evolution** | The city itself (categorical 30×25 grid + tax) | 3,751 | **2,760** (weekend 50×50; 50k evals 1,820) | **11 min – weekend** |
+| **ELM** (code-genome) | **Python source code** for `act(obs, state)`, mutated/crossed by Claude | N/A (tokens) | **14,908** (clind_long cl_ind run; diverse 4,460; prior 1,792) | hundreds–thousands of LLM calls |
 | **Open-loop ActionTape** | A fixed sequence of `(tool, x, y)` triples | 300–3,000 | 1,120 (tape@600) | ~1 h |
 | **Hybrid** (tape + net) | Tape prefix + closed-loop net tail | 5k–13k | 740 (rich_hybrid@500) | ~10 h |
 | **Closed-loop ConvPolicy / DeepConv / MLP** | A single network from obs → action | 0.7k–155k | **0** | hours, scaled with depth |
@@ -23,25 +23,32 @@ Replay-verified `cityPop`, deterministic engine:
 
 | rank | approach | cityPop | R/C/I | params | wall (8w on M4) | notes |
 |---:|---|---:|---|---:|---:|---|
-| 1 | **ELM diverse-seed run (Claude mutator, ~1.16k iters)** | **4,460** | ~½R ¼I ¼C | N/A — Python source | ~5 h (resumed) | **new champion**, ~2.4×; **open-loop blueprint** (replay mean 4,085/8 seeds). See [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md) |
-| 2 | **`layout` res_ind 50k evals** | **1,820** | 78/1/0 | 3,751 | ~37 min | replay #3 of stored top-3 |
-| 3 | **ELM (Claude as mutator, 148 iters)** | **1,792** | (heavy R) | N/A — Python source | hundreds of API calls | prior ELM best — beats every CMA-ES-trained net by 5× |
-| 4 | `layout` res_ind 10k evals | 1,680 | 53/2/0 | 3,751 | 11 min | first layout milestone |
-| 5 | `tape` @600 varied | 1,120 | 8/0/5 | 1,800 | overnight | first R+I mix, policy-based |
-| 6 | `layout` density | 1,180 | 59/0/0 | 3,751 | 33 min | archive collapsed |
-| 7 | `tape` @400 varied | 800 | 0/0/5 | 1,200 | 15 min | pure industrial |
-| 8 | `tape` @800 res_ind n=3 | 780 | 11/0/4 | 2,400 | ~3 h | most res, smaller total |
-| 9 | **`rich_hybrid` t200@500 growth ec** | **740** | **4/0/4** | 12,752 | 9.9 h | **first closed-loop mixed R+I** |
-| 10 | `tape` @300 growth ec | 660 | 1/0/4 | 900 | 22 min | first tape@300 with R |
-| 11 | `tape` @200 varied | 640 | 0/0/4 | 600 | 9 min | |
+| 1 | **ELM `clind_long` (Claude mutator, cl_ind, 15k iters)** | **14,908** | 804/0/0 | N/A — Python source | overnight | **overall champion**; robust mean of 5 rolls, **15,380** single replay; open-loop blueprint; dense R cross. `docs/champions/elm_clind_long_15k.{png,gif}` |
+| 2 | ELM `clind_react` (cl_ind) | 5,380 | heavy R | N/A — Python source | overnight | reactive variant; replay ~4,280 |
+| 3 | **ELM diverse-seed run (~1.16k iters)** | **4,460** | ~½R ¼I ¼C | N/A — Python source | ~5 h (resumed) | open-loop blueprint (replay mean 4,085/8 seeds). See [ELM_DIVERSE_RUN.md](ELM_DIVERSE_RUN.md) |
+| 4 | ELM `clind_fine` (cl_ind) | 4,280 | heavy R | N/A — Python source | overnight | finer cl_ind grid |
+| 5 | **`layout` weekend 50×50** | **2,760** | 93/0/1 | 3,751 | weekend (34.6k gens) | best CMA/layout; replay 1,980–2,760 (stored obj 3,756) |
+| 6 | `layout` res_ind 50k evals | 1,820 | 78/1/0 | 3,751 | ~37 min | replay #3 of stored top-3 |
+| 7 | ELM (Claude as mutator, 148 iters) | 1,792 | heavy R | N/A — Python source | hundreds of API calls | prior ELM best |
+| 8 | `layout` res_ind 10k evals | 1,680 | 53/2/0 | 3,751 | 11 min | first layout milestone |
+| 9 | `layout` density | 1,180 | 59/0/0 | 3,751 | 33 min | archive collapsed |
+| 10 | `tape` @600 varied | 1,120 | 8/0/5 | 1,800 | overnight | best tape; first R+I mix |
+| 11 | `tape` @400 varied | 800 | 0/0/5 | 1,200 | 15 min | pure industrial |
+| 12 | `tape` @800 res_ind n=3 | 780 | 11/0/4 | 2,400 | ~3 h | most res, smaller total |
+| 13 | **`rich_hybrid` t200@500 growth ec** | **740** | **4/0/4** | 12,752 | 9.9 h | **first closed-loop mixed R+I** |
+| 14 | `tape` @300 growth ec | 660 | 1/0/4 | 900 | 22 min | first tape@300 with R |
+| 15 | `tape` @200 varied | 640 | 0/0/4 | 600 | 9 min | |
 | ~ | `hybrid` / `rich_hybrid` 100@300 | 640 | 0/0/4 | 5k–13k | 6 h | hybrid ceiling |
 | ~ | `rich_randprefix` 50@200 n=5 | 360 | 9/0/1 | 12,452 | 5.5 h | first net-only mixed R+I |
 | ~ | `randprefix` n=5 | 160 | 0/0/1 | 11k | 2.3 h | first net-based growth, single zone |
 | ~ | `randprefix` n=10 | 0 | 0/0/0 | 11k | 4.5 h | over-averaging killed lucky-seed |
 | ~ | every closed-loop net without scaffolding | **0** | 0/0/0 | 0.7k–155k | hours | bonuses only |
 
-**Headline**: ELM with a **diverse seed front** is the new champion at cityPop
-**≈4,460** (replay mean 4,085), ~2.4× the previous best. Two more findings:
+**Headline**: the **`clind_long` ELM run** (cl_ind behavior measures, 15,000
+iterations) is the overall champion at cityPop **14,908** (robust mean of 5
+rolls; **15,380** on a fresh single replay) — ~8× the best CMA-ES/layout city
+and ~3.3× the prior ELM record. The diverse-seed run (≈4,460) it superseded is
+still the cleanest study of *why* ELM wins. Two more findings:
 
 - **The peak is open-loop.** When free to optimize, Claude does *not* evolve a
   closed-loop controller — it authors large, fixed **blueprints** (precompute
