@@ -1,0 +1,75 @@
+policy = tape  params = 300  sigma0 = 1.0  es = cma_es
+fitness = dense
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: divide by zero encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: overflow encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: invalid value encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: divide by zero encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: overflow encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:299: RuntimeWarning: invalid value encountered in matmul
+  z = np.matmul(self.cov.invsqrt, y)
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:73: RuntimeWarning: divide by zero encountered in matmul
+  self.invsqrt = (
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:73: RuntimeWarning: overflow encountered in matmul
+  self.invsqrt = (
+/Users/togelius/Library/Python/3.9/lib/python/site-packages/ribs/emitters/opt/_cma_es.py:73: RuntimeWarning: invalid value encountered in matmul
+  self.invsqrt = (
+running with 8 worker processes
+running 50 generations, 5 emitters x 20 solutions = 100 evals/gen
+gen   1/50  filled=  16/400  obj_max=178.9  obj_mean=46.15  qd_score=738.4  (12.0s, gen_max_obj=178.9)
+gen   2/50  filled=  20/400  obj_max=178.9  obj_mean=40.25  qd_score=805.0  (8.4s, gen_max_obj=23.7)
+gen   3/50  filled=  22/400  obj_max=178.9  obj_mean=38.20  qd_score=840.3  (8.7s, gen_max_obj=21.1)
+gen   4/50  filled=  22/400  obj_max=178.9  obj_mean=45.21  qd_score=994.5  (9.1s, gen_max_obj=171.6)
+gen   5/50  filled=  22/400  obj_max=178.9  obj_mean=45.53  qd_score=1001.6  (8.8s, gen_max_obj=20.5)
+gen   6/50  filled=  22/400  obj_max=178.9  obj_mean=45.53  qd_score=1001.6  (9.0s, gen_max_obj=171.8)
+gen   7/50  filled=  22/400  obj_max=178.9  obj_mean=45.68  qd_score=1005.0  (8.8s, gen_max_obj=19.0)
+gen   8/50  filled=  23/400  obj_max=178.9  obj_mean=44.12  qd_score=1014.8  (8.7s, gen_max_obj=16.7)
+gen   9/50  filled=  23/400  obj_max=178.9  obj_mean=50.43  qd_score=1159.9  (8.7s, gen_max_obj=168.8)
+gen  10/50  filled=  23/400  obj_max=178.9  obj_mean=50.46  qd_score=1160.6  (8.8s, gen_max_obj=17.3)
+gen  11/50  filled=  23/400  obj_max=178.9  obj_mean=50.46  qd_score=1160.6  (8.8s, gen_max_obj=17.0)
+gen  12/50  filled=  23/400  obj_max=178.9  obj_mean=50.46  qd_score=1160.6  (9.0s, gen_max_obj=14.9)
+gen  13/50  filled=  24/400  obj_max=178.9  obj_mean=48.61  qd_score=1166.6  (9.2s, gen_max_obj=15.0)
+gen  14/50  filled=  24/400  obj_max=178.9  obj_mean=48.61  qd_score=1166.6  (9.4s, gen_max_obj=14.3)
+gen  15/50  filled=  24/400  obj_max=178.9  obj_mean=48.61  qd_score=1166.6  (9.8s, gen_max_obj=11.7)
+gen  16/50  filled=  24/400  obj_max=178.9  obj_mean=54.92  qd_score=1318.1  (9.4s, gen_max_obj=172.2)
+gen  17/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.0s, gen_max_obj=193.3)
+gen  18/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.2s, gen_max_obj=12.4)
+gen  19/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.2s, gen_max_obj=11.2)
+gen  20/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.2s, gen_max_obj=11.9)
+gen  21/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.1s, gen_max_obj=11.8)
+gen  22/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.1s, gen_max_obj=12.4)
+gen  23/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.3s, gen_max_obj=14.1)
+gen  24/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.2s, gen_max_obj=172.6)
+gen  25/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.1s, gen_max_obj=10.6)
+gen  26/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.3s, gen_max_obj=11.4)
+gen  27/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.2s, gen_max_obj=10.8)
+gen  28/50  filled=  24/400  obj_max=193.3  obj_mean=55.52  qd_score=1332.5  (9.3s, gen_max_obj=10.7)
+gen  29/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.2s, gen_max_obj=329.8)
+gen  30/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.2s, gen_max_obj=10.9)
+gen  31/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.2s, gen_max_obj=9.9)
+gen  32/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.2s, gen_max_obj=9.1)
+gen  33/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=11.3)
+gen  34/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=9.8)
+gen  35/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=10.2)
+gen  36/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=9.0)
+gen  37/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=10.0)
+gen  38/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=7.8)
+gen  39/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=169.4)
+gen  40/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (8.9s, gen_max_obj=8.4)
+gen  41/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.0s, gen_max_obj=7.2)
+gen  42/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.0s, gen_max_obj=9.3)
+gen  43/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.0s, gen_max_obj=9.4)
+gen  44/50  filled=  24/400  obj_max=329.8  obj_mean=62.09  qd_score=1490.1  (9.0s, gen_max_obj=11.0)
+gen  45/50  filled=  25/400  obj_max=329.8  obj_mean=59.75  qd_score=1493.7  (9.2s, gen_max_obj=9.2)
+gen  46/50  filled=  25/400  obj_max=329.8  obj_mean=59.92  qd_score=1497.9  (8.9s, gen_max_obj=9.1)
+gen  47/50  filled=  25/400  obj_max=329.8  obj_mean=59.92  qd_score=1497.9  (8.8s, gen_max_obj=7.8)
+gen  48/50  filled=  25/400  obj_max=329.8  obj_mean=59.92  qd_score=1497.9  (8.9s, gen_max_obj=9.7)
+gen  49/50  filled=  25/400  obj_max=329.8  obj_mean=59.92  qd_score=1497.9  (9.1s, gen_max_obj=10.2)
+gen  50/50  filled=  25/400  obj_max=329.8  obj_mean=59.92  qd_score=1497.9  (8.8s, gen_max_obj=7.5)
+
+total: 454.7s
+saved archive to archive_tape.npz (25 elites)
