@@ -2024,3 +2024,29 @@ it 1973 [mutat]   fit=     8.0 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | fil
 it 1974 [mutat]   fit=   661.7 pop=  640 m=(0.45,0.13,0.31) cell=(3, 1, 3) | filled=164 best_pop=2613 best_fit=2623
 it 1976 [mutat]   fit=    36.5 pop=    0 m=(0.60,0.00,0.00) cell=(4, 0, 0) | filled=164 best_pop=2613 best_fit=2623
 it 1975 [cross] + fit=   655.0 pop=  640 m=(0.37,0.10,0.47) cell=(2, 0, 4) | filled=164 best_pop=2613 best_fit=2623
+it 1977 [mutat]   fit=     9.3 pop=    0 m=(1.00,0.00,1.00) cell=(7, 0, 9) | filled=164 best_pop=2613 best_fit=2623
+it 1978 [cross]   fit=     5.8 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=164 best_pop=2613 best_fit=2623
+it 1979 [mutat]   fit=     6.9 pop=    0 m=(0.96,0.00,0.00) cell=(7, 0, 0) | filled=164 best_pop=2613 best_fit=2623
+it 1980 [mutat]   fit=    11.7 pop=    0 m=(0.97,0.00,0.33) cell=(7, 0, 3) | filled=164 best_pop=2613 best_fit=2623
+it 1981 [mutat] + fit=   539.0 pop=  533 m=(0.71,0.00,0.47) cell=(5, 0, 4) | filled=164 best_pop=2613 best_fit=2623
+it 1982 [mutat]   fit=    76.0 pop=   60 m=(0.88,0.01,0.28) cell=(7, 0, 2) | filled=164 best_pop=2613 best_fit=2623
+it 1983 [mutat]   fit=    17.9 pop=    0 m=(1.00,0.00,0.39) cell=(7, 0, 3) | filled=164 best_pop=2613 best_fit=2623
+it 1984 [mutat]   fit=     2.2 pop=    0 m=(0.99,0.00,0.00) cell=(7, 0, 0) | filled=164 best_pop=2613 best_fit=2623
+it 1985 [mutat]   fit=     8.1 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=164 best_pop=2613 best_fit=2623
+it 1986 [cross] + fit=   771.1 pop=  760 m=(0.59,0.55,0.35) cell=(4, 4, 3) | filled=165 best_pop=2613 best_fit=2623
+it 1987 [mutat]   fit=     6.9 pop=    0 m=(0.82,0.00,0.00) cell=(6, 0, 0) | filled=165 best_pop=2613 best_fit=2623
+it 1988 [mutat]   fit=     3.3 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=165 best_pop=2613 best_fit=2623
+it 1989 [mutat]   fit=   299.2 pop=  287 m=(0.79,0.00,0.25) cell=(6, 0, 2) | filled=165 best_pop=2613 best_fit=2623
+it 1991 [mutat] + fit=   662.8 pop=  647 m=(0.52,0.18,0.23) cell=(4, 1, 2) | filled=165 best_pop=2613 best_fit=2623
+it 1990 [cross] + fit=   546.1 pop=  533 m=(0.67,0.39,0.83) cell=(5, 3, 8) | filled=166 best_pop=2613 best_fit=2623
+it 1992 [mutat]   fit=   169.0 pop=  160 m=(0.44,0.00,0.25) cell=(3, 0, 2) | filled=166 best_pop=2613 best_fit=2623
+it 1993 [mutat] + fit=   663.1 pop=  640 m=(0.68,0.00,0.47) cell=(5, 0, 4) | filled=166 best_pop=2613 best_fit=2623
+it 1994 [mutat]   fit=     6.9 pop=    0 m=(0.98,0.00,0.00) cell=(7, 0, 0) | filled=166 best_pop=2613 best_fit=2623
+it 1995 [mutat]   fit=   525.6 pop=  500 m=(1.00,0.54,0.27) cell=(7, 4, 2) | filled=166 best_pop=2613 best_fit=2623
+it 1997 [mutat]   fit=     4.6 pop=    0 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=166 best_pop=2613 best_fit=2623
+it 1996 [mutat]   fit=   398.4 pop=  373 m=(0.50,0.21,0.40) cell=(3, 1, 3) | filled=166 best_pop=2613 best_fit=2623
+it 1998 [mutat]   fit=     5.7 pop=    0 m=(0.97,0.00,0.00) cell=(7, 0, 0) | filled=166 best_pop=2613 best_fit=2623
+it 1999 [cross]   fit=   662.9 pop=  640 m=(0.87,0.24,1.00) cell=(6, 1, 9) | filled=166 best_pop=2613 best_fit=2623
+it 2000 [mutat] + fit=    17.2 pop=    0 m=(0.80,0.00,0.50) cell=(6, 0, 5) | filled=166 best_pop=2613 best_fit=2623
+it 2001 [mutat] + fit=   659.6 pop=  640 m=(0.89,0.41,1.00) cell=(7, 3, 9) | filled=166 best_pop=2613 best_fit=2623
+it 2002 [mutat]   fit=     5.8 pop=    0 m=(0.88,0.00,0.00) cell=(7, 0, 0) | filled=166 best_pop=2613 best_fit=2623
