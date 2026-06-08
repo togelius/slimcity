@@ -27,12 +27,17 @@ from __future__ import annotations
 import argparse
 import json
 import multiprocessing as mp
+import os
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
 from elm.archive import MapElitesArchive
-from elm.evaluate_code import eval_code, CodeResult, INVALID_FITNESS
+from elm.evaluate_code import (
+    eval_code, CodeResult, INVALID_FITNESS, aggregate_measures,
+)
 from elm.operator import make_operator, OperatorError
 from elm.seeds import SEEDS
 
@@ -47,6 +52,26 @@ CROSSOVER_DIRECTIVE = (
     "Combine the strongest ideas from both parents into one coherent policy "
     "that grows a larger or more balanced city."
 )
+# Used 50% of the time (CL_DEMAND_PROB) to explicitly push the operator toward
+# genuinely reactive policies — the archive has cf_sensitivity / trajectory_
+# divergence axes but nothing in the plain directives asks for closed-loop code,
+# so the search otherwise stays 100% open-loop.
+CLOSED_LOOP_DIRECTIVE = (
+    "Write a genuinely CLOSED-LOOP policy. Each step, READ obs.tile_map (and "
+    "obs.city_pop / obs.powered_zones) and decide the NEXT single placement "
+    "from what you currently observe. Do NOT precompute a fixed list of "
+    "placements and replay it; use `state` only as light memory (e.g. a small "
+    "phase counter), never as a stored full plan. Concretely: scan the current "
+    "map with the mask helpers (wire_mask, empty_mask, res_mask, road_mask, "
+    "plant_mask), find where power and roads already reach, and place the next "
+    "wire/road/zone adjacent to what already exists, adapting as the city "
+    "grows. Still guarantee power (a coal plant + wires) and road access so "
+    "zones actually grow. GOAL: the policy's actions should genuinely change "
+    "when the observed map changes (high reactivity) AND it should still grow "
+    "cityPop. This explores the high-reactivity region of the archive that "
+    "open-loop replay policies cannot reach."
+)
+CL_DEMAND_PROB = 0.5
 
 
 # ---- robust sandboxed evaluation (parallel subprocesses + averaging) ----
@@ -111,8 +136,7 @@ def robust_eval(source, timeout, n_evals, base_seed, **kwargs):
     agg = CodeResult(
         ok=True,
         fitness=float(_np.mean(fits)),
-        measures=(float(_np.mean([r.measures[0] for r in ok])),
-                  float(_np.mean([r.measures[1] for r in ok]))),
+        measures=aggregate_measures(ok, kwargs.get("measures_mode", "res_ind")),
         city_pop=int(round(_np.mean([r.city_pop for r in ok]))),
         res_pop=int(round(_np.mean([r.res_pop for r in ok]))),
         com_pop=int(round(_np.mean([r.com_pop for r in ok]))),
@@ -148,22 +172,46 @@ def main():
     ap.add_argument("--fitness", default="dense",
                     choices=["pop", "dense", "varied", "growth"])
     ap.add_argument("--measures", default="res_ind",
-                    choices=["road_ind", "res_ind", "density", "entropy_count"])
-    ap.add_argument("--archive-dims", default="20,20")
+                    choices=["road_ind", "res_ind", "density", "entropy_count",
+                             "cl_ind"])
+    ap.add_argument("--archive-dims", default="20,20",
+                    help="comma dims; cl_ind is 3-D, e.g. 8,8,10 "
+                         "(cf_sensitivity, traj_divergence, ind_share)")
     # sandbox / io
+    ap.add_argument("--workers", type=int, default=1,
+                    help="concurrent operator+eval pipelines (threads). Each does "
+                         "its own LLM call + n_evals subprocesses; peak procs ~ "
+                         "workers*n_evals. >1 keeps the CPU busy while LLM calls wait.")
     ap.add_argument("--timeout", type=float, default=15.0,
                     help="per-evaluation wall-clock budget (subprocess)")
     ap.add_argument("--no-sandbox", action="store_true",
                     help="evaluate inline (faster, no timeout protection)")
     ap.add_argument("--out", default="results/elm_archive.npz")
+    ap.add_argument("--resume", action="store_true",
+                    help="resume from an existing --out archive + gen log "
+                         "(skip seeding, continue iteration numbering)")
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--rng-seed", type=int, default=0,
                     help="seed for operator/parent-selection RNG")
+    ap.add_argument("--init-archive", default=None,
+                    help="resume: load an existing ELM .npz archive and keep "
+                         "evolving it (skips re-seeding). Lets a long run "
+                         "survive container restarts by relaunching from its "
+                         "last checkpoint.")
     args = ap.parse_args()
 
     dims = tuple(int(x) for x in args.archive_dims.split(","))
     rng = np.random.default_rng(args.rng_seed)
-    archive = MapElitesArchive(dims=dims)
+    # Resume from an explicit --init-archive path, or from --out when --resume
+    # is set; either way continue an existing front instead of re-seeding.
+    init_path = args.init_archive or (
+        args.out if (args.resume and os.path.exists(args.out)) else None)
+    resuming = init_path is not None
+    if resuming:
+        archive = MapElitesArchive.load(init_path)
+        dims = tuple(int(x) for x in archive.dims)  # int (not np.int64) for json log
+    else:
+        archive = MapElitesArchive(dims=dims)
 
     eval_kwargs = dict(
         n_actions=args.n_actions, ticks_per_action=args.ticks_per_action,
@@ -184,8 +232,7 @@ def main():
                 return rs[0], []
             agg = CodeResult(
                 ok=True, fitness=float(np.mean([r.fitness for r in ok])),
-                measures=(float(np.mean([r.measures[0] for r in ok])),
-                          float(np.mean([r.measures[1] for r in ok]))),
+                measures=aggregate_measures(ok, args.measures),
                 city_pop=int(round(np.mean([r.city_pop for r in ok]))),
                 res_pop=int(round(np.mean([r.res_pop for r in ok]))),
                 com_pop=int(round(np.mean([r.com_pop for r in ok]))),
@@ -227,94 +274,140 @@ def main():
              "episode_seed": args.episode_seed, "iters": args.iters})
     print(f"  logging every generation -> {gen_log_path}")
 
-    # ---- seed the archive ----
-    for name in args.seeds.split(","):
-        name = name.strip()
-        if name not in SEEDS:
-            print(f"  ! unknown seed {name!r}, skipping")
-            continue
-        r, spread = evaluate(SEEDS[name])
-        if not r.ok:
-            print(f"  ! seed {name!r} failed: {r.error}")
-            continue
-        imp, cell = archive.add(SEEDS[name], r.fitness, r.measures,
-                                city_pop=r.city_pop, origin="seed",
-                                iteration=-1, render=r.render)
-        log_gen({"event": "eval", "iteration": -1, "origin": "seed",
-                 "name": name, "parents": [], "improved": bool(imp),
-                 "cell": list(cell), "fitness": r.fitness, "measures": list(r.measures),
-                 "city_pop": r.city_pop, "res_pop": r.res_pop, "com_pop": r.com_pop,
-                 "ind_pop": r.ind_pop, "n_errors": r.n_errors, "error": r.error,
-                 "eval_fits": spread, "source": SEEDS[name]})
-        print(f"  seed {name:7s} fitness={r.fitness:8.1f} cityPop={r.city_pop:5d} "
-              f"cell={cell} rolls={spread} {'+' if imp else 'x'}")
-    if not archive.cells:
-        print("no seeds inserted — aborting."); return
-    archive.record_history(0)
+    # ---- seed the archive (skipped when resuming) ----
+    if resuming:
+        # Continue numbering past the last ATTEMPT (gen log records every
+        # iteration, not just improving ones), so iters never duplicate.
+        last_it = max([e.iteration for e in archive.cells.values()] + [0])
+        if os.path.exists(gen_log_path):
+            for line in open(gen_log_path):
+                try:
+                    it_n = json.loads(line).get("iteration")
+                    if isinstance(it_n, int):
+                        last_it = max(last_it, it_n)
+                except Exception:
+                    pass
+        start_iter = last_it + 1
+        print(f"  RESUMED from {init_path}: {len(archive.cells)} elites, "
+              f"best_pop={archive.best.city_pop}, continuing at iter {start_iter}")
+        log_gen({"event": "resume", "from": init_path,
+                 "filled": len(archive.cells), "start_iter": start_iter})
+    else:
+        start_iter = 1
+        for name in args.seeds.split(","):
+            name = name.strip()
+            if name not in SEEDS:
+                print(f"  ! unknown seed {name!r}, skipping")
+                continue
+            r, spread = evaluate(SEEDS[name])
+            if not r.ok:
+                print(f"  ! seed {name!r} failed: {r.error}")
+                continue
+            imp, cell = archive.add(SEEDS[name], r.fitness, r.measures,
+                                    city_pop=r.city_pop, origin="seed",
+                                    iteration=-1, render=r.render)
+            log_gen({"event": "eval", "iteration": -1, "origin": "seed",
+                     "name": name, "parents": [], "improved": bool(imp),
+                     "cell": list(cell), "fitness": r.fitness,
+                     "measures": list(r.measures), "city_pop": r.city_pop,
+                     "res_pop": r.res_pop, "com_pop": r.com_pop,
+                     "ind_pop": r.ind_pop, "n_errors": r.n_errors,
+                     "error": r.error, "eval_fits": spread, "source": SEEDS[name]})
+            print(f"  seed {name:7s} fitness={r.fitness:8.1f} cityPop={r.city_pop:5d} "
+                  f"cell={cell} rolls={spread} {'+' if imp else 'x'}")
+        if not archive.cells:
+            print("no seeds inserted — aborting."); return
+        archive.record_history(0)
 
-    # ---- evolve ----
+    # ---- evolve (optionally concurrent: --workers threads) ----
+    # All shared state (archive, rng, gen_log, counters, stdout) is touched only
+    # under `lock`; the slow parts (LLM call, env eval) run outside it, so N
+    # workers overlap their LLM waits + eval bursts. MAP-Elites tolerates the
+    # slightly-stale parent snapshots this implies (standard parallel QD).
     t0 = time.time()
-    n_improved = n_invalid = n_op_err = 0
-    for it in range(1, args.iters + 1):
-        do_cross = (len(archive.cells) >= 2 and rng.random() < args.crossover_rate)
-        origin = "crossover" if do_cross else "mutate"
-        parents = ()
+    lock = threading.Lock()
+    C = {"imp": 0, "inv": 0, "op": 0, "done": 0}
+
+    def run_one(it: int):
         try:
-            if do_cross:
-                p1, p2 = archive.sample(rng, k=2, weighted=args.weighted_parents)
-                parents = (p1.eid, p2.eid)
-                child = operator.crossover(p1, p2, CROSSOVER_DIRECTIVE,
-                                           renders=(p1.render, p2.render))
-            else:
-                (p,) = archive.sample(rng, k=1, weighted=args.weighted_parents)
-                parents = (p.eid,)
-                child = operator.mutate(p, MUTATE_DIRECTIVE, render=p.render)
-        except OperatorError as e:
-            n_op_err += 1
-            log_gen({"event": "op_error", "iteration": it, "origin": origin,
-                     "parents": list(parents), "error": str(e),
-                     "source": getattr(e, "raw", None)})
-            print(f"it {it:4d} [{('xover' if do_cross else 'mut')}] op-error: {e}")
-            continue
+            with lock:
+                do_cross = (len(archive.cells) >= 2
+                            and rng.random() < args.crossover_rate)
+                cl_demand = rng.random() < CL_DEMAND_PROB  # 50%: demand closed-loop
+                origin = ("crossover" if do_cross else "mutate") + ("+cl" if cl_demand else "")
+                if do_cross:
+                    p1, p2 = archive.sample(rng, k=2, weighted=args.weighted_parents)
+                    parents, renders, ps = (p1.eid, p2.eid), (p1.render, p2.render), (p1, p2)
+                else:
+                    (p,) = archive.sample(rng, k=1, weighted=args.weighted_parents)
+                    parents, renders, ps = (p.eid,), p.render, (p,)
+            # --- LLM operator (no lock) ---
+            try:
+                if do_cross:
+                    directive = CLOSED_LOOP_DIRECTIVE if cl_demand else CROSSOVER_DIRECTIVE
+                    child = operator.crossover(ps[0], ps[1], directive, renders=renders)
+                else:
+                    directive = CLOSED_LOOP_DIRECTIVE if cl_demand else MUTATE_DIRECTIVE
+                    child = operator.mutate(ps[0], directive, render=renders)
+            except OperatorError as e:
+                with lock:
+                    C["op"] += 1
+                    log_gen({"event": "op_error", "iteration": it, "origin": origin,
+                             "parents": list(parents), "error": str(e),
+                             "source": getattr(e, "raw", None)})
+                    print(f"it {it:4d} [{origin[:5]}] op-error: {e}")
+                return
+            # --- evaluation (no lock; spawns its own subprocesses) ---
+            r, spread = evaluate(child)
+            with lock:
+                if not r.ok:
+                    C["inv"] += 1
+                    log_gen({"event": "invalid", "iteration": it, "origin": origin,
+                             "parents": list(parents), "error": r.error, "source": child})
+                    print(f"it {it:4d} [{origin[:5]}] invalid: {r.error}")
+                    return
+                imp, cell = archive.add(child, r.fitness, r.measures,
+                                        city_pop=r.city_pop, parents=parents,
+                                        origin=origin, iteration=it, render=r.render)
+                log_gen({"event": "eval", "iteration": it, "origin": origin,
+                         "parents": list(parents), "improved": bool(imp),
+                         "cell": list(cell), "fitness": r.fitness,
+                         "measures": list(r.measures), "city_pop": r.city_pop,
+                         "res_pop": r.res_pop, "com_pop": r.com_pop,
+                         "ind_pop": r.ind_pop, "n_errors": r.n_errors,
+                         "error": r.error, "eval_fits": spread, "source": child})
+                C["imp"] += int(imp)
+                C["done"] += 1
+                b = archive.best
+                mstr = ",".join(f"{x:.2f}" for x in r.measures)
+                print(f"it {it:4d} [{origin[:5]}] {'+' if imp else ' '} "
+                      f"fit={r.fitness:8.1f} pop={r.city_pop:5d} m=({mstr}) "
+                      f"cell={cell} | filled={len(archive.cells)} "
+                      f"best_pop={b.city_pop} best_fit={b.fitness:.0f}")
+                if C["done"] % args.save_every == 0:
+                    archive.record_history(it)
+                    archive.save(args.out)
+        except Exception as e:  # noqa: BLE001 — never let one iteration kill the pool
+            with lock:
+                print(f"it {it:4d} UNEXPECTED: {type(e).__name__}: {e}")
 
-        r, spread = evaluate(child)
-        if not r.ok:
-            n_invalid += 1
-            log_gen({"event": "invalid", "iteration": it, "origin": origin,
-                     "parents": list(parents), "error": r.error, "source": child})
-            print(f"it {it:4d} [{origin[:5]}] invalid: {r.error}")
-            continue
-
-        imp, cell = archive.add(child, r.fitness, r.measures, city_pop=r.city_pop,
-                                parents=parents, origin=origin, iteration=it,
-                                render=r.render)
-        log_gen({"event": "eval", "iteration": it, "origin": origin,
-                 "parents": list(parents), "improved": bool(imp), "cell": list(cell),
-                 "fitness": r.fitness, "measures": list(r.measures),
-                 "city_pop": r.city_pop, "res_pop": r.res_pop, "com_pop": r.com_pop,
-                 "ind_pop": r.ind_pop, "n_errors": r.n_errors, "error": r.error,
-                 "eval_fits": spread, "source": child})
-        n_improved += int(imp)
-        b = archive.best
-        flag = "+" if imp else " "
-        print(f"it {it:4d} [{origin[:5]}] {flag} fit={r.fitness:8.1f} "
-              f"pop={r.city_pop:5d} m=({r.measures[0]:.2f},{r.measures[1]:.2f}) "
-              f"cell={cell} | filled={len(archive.cells)} "
-              f"best_pop={b.city_pop} best_fit={b.fitness:.0f}")
-
-        if it % args.save_every == 0:
-            archive.record_history(it)
-            archive.save(args.out)
+    iters = list(range(start_iter, args.iters + 1))
+    if args.workers <= 1:
+        for it in iters:
+            run_one(it)
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            list(ex.map(run_one, iters))
 
     archive.record_history(args.iters)
     archive.save(args.out)
-    log_gen({"event": "run_end", "improved": n_improved, "invalid": n_invalid,
-             "op_errors": n_op_err, "filled": len(archive.cells)})
+    log_gen({"event": "run_end", "improved": C["imp"], "invalid": C["inv"],
+             "op_errors": C["op"], "filled": len(archive.cells)})
     gen_log.close()
     dt = time.time() - t0
     print("\n" + archive.summary())
-    print(f"improved={n_improved} invalid={n_invalid} op_errors={n_op_err} "
-          f"in {dt:.1f}s ({dt/max(1,args.iters):.2f}s/it)")
+    print(f"improved={C['imp']} invalid={C['inv']} op_errors={C['op']} "
+          f"in {dt:.1f}s ({dt/max(1,len(iters)):.2f}s/it, workers={args.workers})")
     print(f"saved archive -> {args.out}")
     print(f"saved full generation log -> {gen_log_path}")
 

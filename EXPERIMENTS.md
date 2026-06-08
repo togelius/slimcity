@@ -247,8 +247,8 @@ for multi-machine sync.
 | config | evals | wall | best obj | replay cityPop | R/C/I (best replay) | insight |
 | ------ | ----: | ---: | -------: | -------------: | ------------------- | ------- |
 | `layout` res_ind 40×40, 500g×5×20, ticks=100k | 50,000 | ~2200s | **2526.9** | **1820** | 78/1/0 | **Replay cityPop beats 10k baseline (1680).** Stored fitness up but replay gap persists (~600). 88 elites / 1600 cells. |
-| `layout` res_ind 20×20, 200g×5×20, ticks=200k | 20,000 | running | — | — | — | 2× stabilization (~12 game years). |
-| `layout` res_ind 40×40, 500g cont. from 50k | 50,000 | running | — | — | — | Warm-start emitters at best elite of `exp_2026-06-03_layout_resind_50k.npz`. |
+| `layout` res_ind 20×20, 200g×5×20, ticks=200k | 20,000 | 2081s | **2529.5** | **1880** | 71/1/1 | Longer stabilization helps replay pop (+60 vs 50k@100k). Archive peak flat ~gen 90–200. |
+| `layout` res_ind 40×40, 500g cont. from 50k | 50,000 | 2621s | **2949.9** | **2120** | 82/0/1 | **New replay cityPop record.** Warm-start broke plateau at gen 486 (2688→2949 stored). |
 
 `qd_train.py` now appends per-gen lines to `<save>.log` and supports `--init-archive`.
 Batch: `results/run_layout_phase2_2026-06-03.sh`.

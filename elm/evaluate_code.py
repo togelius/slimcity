@@ -11,6 +11,7 @@ ELM archive is directly comparable to a CMA-ME archive.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 
 import numpy as np
@@ -39,6 +40,10 @@ class CodeResult:
     n_errors: int = 0              # how many steps raised inside act()
     error: str | None = None       # compile error, or first runtime error repr
     render: str | None = None      # ascii city (if collect_render=True)
+    # --- closed-loopness instrumentation (filled when measures_mode=="cl_ind") ---
+    cf_sensitivity: float = 0.0    # #2: fraction of steps whose action changes
+                                   #     under an on-distribution counterfactual obs
+    actions: tuple | None = None   # per-step parsed actions, for #3 cross-roll divergence
 
 
 def _shaped_fitness(pop_delta: float, final_map: np.ndarray,
@@ -53,6 +58,57 @@ def _shaped_fitness(pop_delta: float, final_map: np.ndarray,
                 + _variety_bonus(final_map) + _growth_bonus(final_map)
                 + _adjacency_bonus(final_map))
     return pop_delta  # 'pop'
+
+
+# --------------------------------------------------------------------------
+# Closed-loopness descriptors (used when measures_mode == "cl_ind").
+#
+# #2 counterfactual-sensitivity: per step, re-run act() on a COPY of the state
+#    with an ON-DISTRIBUTION donor observation (a real map+stats this same
+#    rollout saw DONOR_LAG steps earlier, with the step index held fixed). If
+#    the action changes, the policy genuinely used what it observed. Holding the
+#    step fixed and copying the state isolate obs->action dependence and exclude
+#    stochasticity (state-stashed RNG is copied, so both calls draw the same).
+#
+# #3 trajectory-divergence: computed across the n_evals rolls in robust_eval —
+#    fraction of steps where the realized action sequences disagree between
+#    different worlds. Captures state-mediated / accumulated reactivity (and
+#    stochasticity) that #2's fixed-state probe can miss. Complementary to #2.
+# --------------------------------------------------------------------------
+DONOR_LAG = 10                 # how many steps back the counterfactual donor obs is
+CL_IND_MODE = "cl_ind"
+
+
+def trajectory_divergence(action_lists) -> float:
+    """Mean pairwise fraction of steps where two rolls' action sequences differ."""
+    lists = [a for a in action_lists if a]
+    if len(lists) < 2:
+        return 0.0
+    tot, pairs = 0.0, 0
+    for i in range(len(lists)):
+        for j in range(i + 1, len(lists)):
+            L = min(len(lists[i]), len(lists[j]))
+            if L == 0:
+                continue
+            d = sum(lists[i][s] != lists[j][s] for s in range(L)) / L
+            tot += d
+            pairs += 1
+    return tot / pairs if pairs else 0.0
+
+
+def aggregate_measures(ok_results, measures_mode: str) -> tuple:
+    """Combine per-roll results into the final QD descriptor.
+
+    cl_ind -> 3-D (counterfactual_sensitivity, trajectory_divergence, ind_share),
+    everything else -> 2-D mean of the per-roll tile_descriptors.
+    """
+    if measures_mode == CL_IND_MODE:
+        cf = float(np.mean([r.cf_sensitivity for r in ok_results]))
+        div = trajectory_divergence([r.actions for r in ok_results])
+        ind = float(np.mean([r.measures[1] for r in ok_results]))  # res_ind -> [1]=ind
+        return (cf, div, ind)
+    return (float(np.mean([r.measures[0] for r in ok_results])),
+            float(np.mean([r.measures[1] for r in ok_results])))
 
 
 def eval_code(
@@ -89,6 +145,13 @@ def eval_code(
     n_err = 0
     first_err: str | None = None
 
+    # Closed-loopness instrumentation (only when we're descriptor-ing on it).
+    want_cl = (measures_mode == CL_IND_MODE)
+    actions: list = []           # parsed action per step (for #3 cross-roll divergence)
+    obs_hist: list = []          # past Obs, for the #2 counterfactual donor
+    cf_probes = 0
+    cf_changes = 0
+
     for step in range(n_actions):
         tile_map = env.get_map()
         s = env.stats
@@ -98,6 +161,23 @@ def eval_code(
             ind_pop=s.ind_pop, funds=s.funds,
             powered_zones=env.engine.poweredZoneCount,
         )
+
+        # #2: counterfactual probe BEFORE the real act (needs the entering state).
+        if want_cl and len(obs_hist) >= DONOR_LAG:
+            d = obs_hist[-DONOR_LAG]
+            donor = Obs(tile_map=d.tile_map, step=step, n_steps=n_actions,
+                        city_pop=d.city_pop, res_pop=d.res_pop, com_pop=d.com_pop,
+                        ind_pop=d.ind_pop, funds=d.funds,
+                        powered_zones=d.powered_zones)
+            try:
+                a_cf = parse_action(act(donor, copy.deepcopy(state)))
+            except Exception:  # noqa: BLE001
+                a_cf = None
+            cf_probes += 1
+            # compared against the real action computed just below
+        else:
+            donor = None
+
         try:
             action = act(obs, state)
         except Exception as e:  # noqa: BLE001 — a bad step shouldn't kill the run
@@ -106,6 +186,13 @@ def eval_code(
                 first_err = f"step {step}: {type(e).__name__}: {e}"
             action = None
         parsed = parse_action(action)
+
+        if want_cl:
+            actions.append(parsed)
+            obs_hist.append(obs)
+            if donor is not None and a_cf != parsed:
+                cf_changes += 1
+
         if parsed is not None:
             env.place(*parsed)
             n_taken += 1
@@ -116,12 +203,16 @@ def eval_code(
     pop_delta = float(s.city_pop - baseline_pop)
     fitness = _shaped_fitness(pop_delta, final_map,
                               env.engine.poweredZoneCount, fitness_mode)
-    measures = tile_descriptors(final_map, mode=measures_mode)
+    # For cl_ind we still need ind_share from the tiles -> compute via res_ind.
+    measures = tile_descriptors(final_map,
+                                mode="res_ind" if want_cl else measures_mode)
     render = env.render_ascii(color=False) if collect_render else None
+    cf_sensitivity = (cf_changes / cf_probes) if cf_probes else 0.0
 
     return CodeResult(
         ok=True, fitness=float(fitness), measures=measures,
         city_pop=s.city_pop, res_pop=s.res_pop, com_pop=s.com_pop,
         ind_pop=s.ind_pop, funds=s.funds,
         n_actions_taken=n_taken, n_errors=n_err, error=first_err, render=render,
+        cf_sensitivity=cf_sensitivity, actions=(tuple(actions) if want_cl else None),
     )
