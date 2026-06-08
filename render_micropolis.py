@@ -112,27 +112,85 @@ def _engine_for_city(path: str):
     return env, e
 
 
-def _engine_for_layout(archive: str):
-    from policy import LayoutGenome
+def _engine_for_archive(archive: str):
+    """Rebuild the best elite of a CMA-ES archive (layout OR action-policy)
+    and return its stabilized engine. Auto-detects layout vs policy from the
+    stored `policy` metadata."""
+    from policy import make_policy
     d = np.load(archive, allow_pickle=True)
     theta = d["solutions"][int(np.argmax(d["objectives"]))].astype(np.float32)
-    g = LayoutGenome(); g.set_params(theta)
-    env = MicropolisEnv(seed=42); g.build(env)
-    env.engine.setSpeed(3); env.engine.setPasses(1)
-    env.tick(100000)  # stabilize so zones grow into their real sprites
+    policy_name = str(d["policy"]) if "policy" in d.files else "layout"
+    kwargs = eval(str(d["policy_kwargs"])) if "policy_kwargs" in d.files else {}
+    n_actions = int(d["n_actions"]) if "n_actions" in d.files else 1
+    tpa = int(d["ticks_per_action"]) if "ticks_per_action" in d.files else 100000
+    seed = int(d["episode_seed"]) if "episode_seed" in d.files else 42
+
+    policy = make_policy(policy_name, **kwargs)
+    policy.set_params(theta)
+    try:
+        policy.reset(seed=seed)
+    except TypeError:
+        policy.reset()
+
+    env = MicropolisEnv(seed=seed)
+    env.engine.setSpeed(3); env.engine.setPasses(1); env.engine.setEnableDisasters(False)
+    if getattr(policy, "IS_LAYOUT", False):
+        policy.build(env)
+        env.tick(n_actions * tpa)
+    else:
+        for _ in range(n_actions):
+            tool, wx, wy = policy.act(env.get_map())
+            env.place(tool, wx, wy)
+            env.tick(tpa)
     return env, env.engine
+
+
+# back-compat alias
+_engine_for_layout = _engine_for_archive
+
+
+def _engine_for_elm(source_path: str, n_actions: int = 120, ticks_per_action: int = 100):
+    """Run an ELM code-genome policy (a best.py with `def act(obs, state)`) and
+    return its stabilized engine, mirroring elm/evaluate_code.py's rollout."""
+    from elm.sandbox import compile_policy, parse_action, Obs
+    with open(source_path) as fh:
+        source = fh.read()
+    act = compile_policy(source)
+    env = MicropolisEnv(seed=42)
+    e = env.engine
+    e.setSpeed(3); e.setPasses(1); e.setEnableDisasters(False)
+    state: dict = {}
+    for step in range(n_actions):
+        s = env.stats
+        obs = Obs(tile_map=env.get_map(), step=step, n_steps=n_actions,
+                  city_pop=s.city_pop, res_pop=s.res_pop, com_pop=s.com_pop,
+                  ind_pop=s.ind_pop, funds=s.funds,
+                  powered_zones=e.poweredZoneCount)
+        try:
+            action = act(obs, state)
+        except Exception:
+            action = None
+        parsed = parse_action(action)
+        if parsed is not None:
+            env.place(*parsed)
+        env.tick(ticks_per_action)
+    return env, e
 
 
 def main():
     ap = argparse.ArgumentParser()
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--city", help="path to a .cty save file")
-    src.add_argument("--layout-archive", help="layout-genome .npz; renders best elite")
+    src.add_argument("--archive", help="CMA-ES .npz (layout OR policy); renders best elite")
+    src.add_argument("--layout-archive", help="alias for --archive (back-compat)")
+    src.add_argument("--elm-source", help="ELM best.py (def act(obs,state)); runs the rollout")
     ap.add_argument("--sheet", default=DEFAULT_SHEET)
     ap.add_argument("--out", default=None, help="still PNG output path")
     ap.add_argument("--gif", default=None, help="animated GIF output path")
     ap.add_argument("--crop", nargs=4, type=int, default=None,
                     metavar=("X0", "Y0", "X1", "Y1"), help="tile-coord crop box")
+    ap.add_argument("--auto-crop", action="store_true",
+                    help="crop to the bounding box of built (non-empty) tiles + margin")
     ap.add_argument("--scale", type=int, default=1)
     ap.add_argument("--frames", type=int, default=48)
     ap.add_argument("--sim-ticks-per-frame", type=int, default=0)
@@ -142,16 +200,27 @@ def main():
     tileset = Tileset(args.sheet)
     if args.city:
         env, e = _engine_for_city(args.city)
+    elif args.elm_source:
+        env, e = _engine_for_elm(args.elm_source)
     else:
-        env, e = _engine_for_layout(args.layout_archive)
+        env, e = _engine_for_archive(args.archive or args.layout_archive)
+
+    crop = args.crop
+    if args.auto_crop:
+        m = _read_map(e)
+        ys, xs = np.nonzero(m != 0)
+        if len(xs):
+            mgn = 3
+            crop = (max(0, xs.min() - mgn), max(0, ys.min() - mgn),
+                    min(WORLD_W, xs.max() + 1 + mgn), min(WORLD_H, ys.max() + 1 + mgn))
 
     if args.out:
-        render_still(e, tileset, crop=args.crop, scale=args.scale).save(args.out)
+        render_still(e, tileset, crop=crop, scale=args.scale).save(args.out)
         print(f"wrote {args.out}")
     if args.gif:
         render_gif(e, tileset, args.gif, frames=args.frames,
                    sim_ticks_per_frame=args.sim_ticks_per_frame,
-                   crop=args.crop, scale=max(args.scale, 1), fps=args.fps)
+                   crop=crop, scale=max(args.scale, 1), fps=args.fps)
         print(f"wrote {args.gif}")
     if not args.out and not args.gif:
         print("nothing to do: pass --out and/or --gif")
