@@ -34,3 +34,8 @@ Thumbs.db
 # Large visualizations only (archives + logs in results/ are tracked for sync)
 results/*.gif
 results/*.png
+
+# Raw ELM generation logs (large; commit the .gz instead)
+results/*generations.jsonl
+results/.last_email_epoch
+results/.weekend_queue_idx

@@ -1,0 +1,24 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "slimcity"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/engine/build"
+    ],
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "files.watcherExclude": {
+      "**/engine/res/**": true,
+      "**/engine/images/**": true,
+      "**/engine/build/**": true
+    },
+    "search.exclude": {
+      "**/engine/res/**": true,
+      "**/engine/images/**": true
+    }
+  }
+}
