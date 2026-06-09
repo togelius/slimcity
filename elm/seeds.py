@@ -315,3 +315,33 @@ DIVERSE_SEEDS = [
     "plan", "industrial", "commercial", "mixed", "res_ind",
     "res_heavy", "grid", "twin", "reactive", "reactive_wire",
 ]
+
+
+# --------------------------------------------------------------------------
+# Champion seeds loaded from prior runs' saved policies, so a new ELM run can
+# start from the best closed-loop strategies discovered so far instead of only
+# the hand-written founders above. Each file's source is read verbatim (leading
+# `# ...` comment lines are valid Python and harmless to the genome). Loaded
+# lazily so a missing file never breaks `import seeds`.
+# --------------------------------------------------------------------------
+import os as _os
+
+_RESULTS = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "results")
+
+# name -> results/<file>, roughly best-first at the 1000x10 episode shape.
+_CHAMPION_FILES = {
+    "comb1000":    "closedloop_comb_1000.py",    # new scalable serviced comb (~83k, cf 0.91)
+    "serviced":    "closedloop_serviced_best.py", # reactive blob + stadium cap-break
+    "clind_react": "elm_clind_react_best.py",     # clind reactive run champion (cf 0.48)
+    "clind_long":  "elm_clind_long_best.py",      # prior closed-loop champion
+    "clind_fine":  "elm_clind_fine_best.py",      # clind fine run champion (cf 0.37)
+}
+
+CHAMPION_SEEDS = []
+for _name, _fn in _CHAMPION_FILES.items():
+    try:
+        with open(_os.path.join(_RESULTS, _fn)) as _f:
+            SEEDS[_name] = _f.read()
+        CHAMPION_SEEDS.append(_name)
+    except OSError:
+        pass
