@@ -1,0 +1,30 @@
+ELM: operator=claude model=claude-sonnet-4-6
+  fitness=dense measures=cl_ind archive=8x8 n_actions=1000 ticks/action=10
+  base_seed=42 n_evals=3 (avg over rolls); sandbox=on (60.0s)
+  logging every generation -> results/elm_comb1000_overnight_generations.jsonl
+  seed comb1000 fitness= 83027.4 cityPop=82767 cell=(7, 0, 0) rolls=[79360.8, 85660.8, 84060.8] +
+  seed serviced fitness= 19586.7 cityPop=19553 cell=(0, 0, 0) rolls=[19433.4, 19533.4, 19793.4] +
+  seed clind_react fitness= 21536.8 cityPop=21467 cell=(3, 3, 0) rolls=[21390.1, 21950.1, 21270.1] +
+  seed clind_long fitness= 16439.9 cityPop=16407 cell=(0, 0, 0) rolls=[16193.2, 17233.2, 15893.2] x
+  seed clind_fine fitness=  1124.0 cityPop= 1113 cell=(2, 5, 1) rolls=[1450.6, 830.6, 1090.6] +
+  seed plan    fitness=   293.7 cityPop=  287 cell=(0, 0, 0) rolls=[327.1, 347.1, 207.1] x
+  seed industrial fitness=   113.7 cityPop=  107 cell=(0, 0, 9) rolls=[327.1, 7.1, 7.1] +
+  seed commercial fitness=     7.1 cityPop=    0 cell=(0, 0, 0) rolls=[7.1, 7.1, 7.1] x
+  seed mixed   fitness=    60.4 cityPop=   53 cell=(0, 0, 3) rolls=[167.1, 7.1, 7.1] +
+  seed res_ind fitness=   213.7 cityPop=  207 cell=(0, 0, 5) rolls=[227.1, 227.1, 187.1] +
+  seed res_heavy fitness=   327.1 cityPop=  320 cell=(0, 0, 2) rolls=[287.1, 367.1, 327.1] +
+  seed grid    fitness=   684.9 cityPop=  673 cell=(0, 0, 3) rolls=[851.5, 391.5, 811.5] +
+  seed twin    fitness=   211.4 cityPop=  200 cell=(0, 0, 4) rolls=[11.4, 271.4, 351.4] +
+  seed reactive fitness=   285.0 cityPop=  280 cell=(7, 7, 0) rolls=[345.0, 205.0, 305.0] +
+  seed reactive_wire fitness=   273.1 cityPop=  267 cell=(0, 0, 0) rolls=[286.4, 246.4, 286.4] x
+it    3 [mutat] + fit=   834.6 pop=  820 m=(0.00,0.00,0.26) cell=(0, 0, 2) | filled=10 best_pop=82767 best_fit=83027
+it    4 [mutat] + fit=  1092.4 pop= 1067 m=(0.00,0.00,0.23) cell=(0, 0, 2) | filled=10 best_pop=82767 best_fit=83027
+it    5 [cross]   fit=     1.9 pop=    0 m=(0.06,0.00,0.00) cell=(0, 0, 0) | filled=10 best_pop=82767 best_fit=83027
+it    2 [cross]   fit=    35.0 pop=    0 m=(0.91,0.00,0.00) cell=(7, 0, 0) | filled=10 best_pop=82767 best_fit=83027
+it    6 [cross]   fit= 54590.6 pop=54387 m=(1.00,0.00,0.00) cell=(7, 0, 0) | filled=10 best_pop=82767 best_fit=83027
+it    8 [cross]   fit= 56368.6 pop=56107 m=(0.91,0.00,0.04) cell=(7, 0, 0) | filled=10 best_pop=82767 best_fit=83027
+it    1 [mutat]   fit=   563.7 pop=  553 m=(0.35,0.74,0.10) cell=(2, 5, 1) | filled=10 best_pop=82767 best_fit=83027
+it   11 [mutat] + fit=    12.2 pop=    0 m=(0.00,0.00,0.16) cell=(0, 0, 1) | filled=11 best_pop=82767 best_fit=83027
+it   10 [mutat] + fit=   162.2 pop=  153 m=(0.64,0.69,0.04) cell=(5, 5, 0) | filled=12 best_pop=82767 best_fit=83027
+it    9 [mutat]   fit=     1.2 pop=    0 m=(0.00,0.00,0.00) cell=(0, 0, 0) | filled=12 best_pop=82767 best_fit=83027
+it    7 [mutat]   fit=     0.0 pop=    0 m=(0.00,0.00,0.00) cell=(0, 0, 0) | filled=12 best_pop=82767 best_fit=83027
