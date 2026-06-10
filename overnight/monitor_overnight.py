@@ -77,11 +77,17 @@ def send_email(subject, body):
 
 def commit_push(npz, log, msg):
     best_py = npz.rsplit(".", 1)[0] + "_best.py"
-    sh(["git", "add", npz, log, best_py])
+    for f in (npz, log, best_py):
+        if os.path.exists(os.path.join(ROOT, f)):
+            sh(["git", "add", f])
     # only commit if something is staged
     if sh(["git", "diff", "--cached", "--quiet"]).returncode != 0:
         sh(["git", "commit", "-m", msg])
-    sh(["git", "pull", "--rebase", "origin", "main"], timeout=180)
+    r = sh(["git", "pull", "--rebase", "origin", "main"], timeout=180)
+    if r.returncode != 0:                       # don't leave a half-finished rebase
+        sh(["git", "rebase", "--abort"])
+        sh(["git", "merge", "--abort"])
+        return r
     return sh(["git", "push", "origin", "main"], timeout=180)
 
 
