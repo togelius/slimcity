@@ -58,6 +58,39 @@ def send(to: str, subject: str, body_path: str, sender: str = DEFAULT_SENDER) ->
     return ok
 
 
+def send_rich(to_list, subject: str, body_path: str, attachments=None,
+              sender: str = DEFAULT_SENDER) -> bool:
+    """Send to multiple recipients with optional file attachments (e.g. PNGs).
+
+    Mail needs a beat to ingest each attachment before `send`, so we add a short
+    delay; otherwise the message can go out without the images.
+    """
+    subj = subject.replace('"', "'")
+    rcpts = "\n".join(
+        f'        make new to recipient at end of to recipients with properties {{address:"{a}"}}'
+        for a in to_list)
+    atts = "\n".join(
+        f'        make new attachment with properties {{file name:POSIX file "{p}"}} at after the last paragraph of content'
+        for p in (attachments or []))
+    delay = "        delay 2" if attachments else ""
+    script = f'''
+    set theBody to (read POSIX file "{body_path}" as «class utf8»)
+    tell application "Mail"
+        set m to make new outgoing message with properties {{subject:"{subj}", sender:"{sender}", content:theBody, visible:false}}
+        tell m
+{rcpts}
+{atts}
+        end tell
+{delay}
+        send m
+    end tell
+    return "sent"
+    '''
+    r = _osascript(script, timeout=120)
+    print(f"send_rich rc={r.returncode} out={r.stdout.strip()} err={r.stderr.strip()}")
+    return r.returncode == 0
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "--dry-run":
         sys.exit(0 if dry_run() else 1)
