@@ -64,11 +64,15 @@
   <div class="sub">SHOOT · DASH · OBLITERATE</div>
   <button class="btn" id="playBtn">PLAY</button>
   <div class="help">
-    <b>Move:</b> WASD &nbsp;·&nbsp; <b>Aim &amp; auto-fire:</b> mouse<br>
-    <b>Nova dash:</b> space / right-click &nbsp;·&nbsp; <b>Touch:</b> drag to move, tap to dash<br>
-    Blast the <span style="color:var(--glow2)">pink hunters</span> — they explode and chain.
-    Grab <span style="color:var(--good)">green cells</span> to crank your combo:
-    higher combo = <b>more bullets</b>. Dash detonates a shockwave. Don't get touched.
+    <b>Move:</b> WASD &nbsp;·&nbsp; <b>Aim &amp; auto-fire:</b> mouse &nbsp;·&nbsp; <b>Nova dash:</b> space / right-click<br>
+    <span style="opacity:.8"><b>Touch:</b> drag to move (auto-aims), tap to dash</span><br><br>
+    Grab <span style="color:var(--good)">green cells</span> — combo = firepower (more bullets).
+    The dash detonates a shockwave and vaporises enemy fire. Don't get touched.<br><br>
+    <span style="color:#ff6bd6">◆ chasers</span> &nbsp;
+    <span style="color:#ffb14d">▲ swarmers</span> &nbsp;
+    <span style="color:#ff5555">⬡ tanks</span> &nbsp;
+    <span style="color:#b07bff">⬠ shooters</span> &nbsp;
+    <span style="color:#ff3df0">★ BOSS</span>
   </div>
 </div>
 
@@ -110,16 +114,17 @@ addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.key===' '){e
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 
 // ---- state ----
-let player, orbs, hunters, particles, sparks, bullets, debris, score, combo, comboTimer, best, running, t, spawnT, hunterT, shake, dashCD, fireT, ripples, flash, kills;
+let player, orbs, hunters, particles, sparks, bullets, ebullets, debris, score, combo, comboTimer, best, running, t, spawnT, hunterT, shake, dashCD, fireT, ripples, flash, kills, bossT, bossNext;
 best = +(localStorage.getItem('neondrift_best')||0);
 document.getElementById('best').textContent = best;
 
 function reset(){
   player={x:W/2,y:H/2,vx:0,vy:0,r:11,trail:[],dashT:0,inv:0,aim:0};
-  orbs=[]; hunters=[]; particles=[]; sparks=[]; bullets=[]; debris=[]; ripples=[];
-  score=0; combo=1; comboTimer=0; t=0; spawnT=0; hunterT=0; shake=0; dashCD=0; fireT=0; flash=0; kills=0; running=true;
+  orbs=[]; hunters=[]; particles=[]; sparks=[]; bullets=[]; ebullets=[]; debris=[]; ripples=[];
+  score=0; combo=1; comboTimer=0; t=0; spawnT=0; hunterT=0; shake=0; dashCD=0; fireT=0; flash=0; kills=0;
+  bossT=0; bossNext=350; running=true;
   for(let i=0;i<4;i++) spawnOrb();
-  spawnHunter();
+  spawnHunter('chaser');
 }
 
 function rnd(a,b){return a+Math.random()*(b-a);}
@@ -129,13 +134,57 @@ function spawnOrb(){
   while(tries<20 && Math.hypot(x-player.x,y-player.y)<120);
   orbs.push({x,y,r:8,pulse:Math.random()*6.28,born:t});
 }
-function spawnHunter(){
-  // spawn at edge away from player
-  const side=Math.floor(rnd(0,4)); let x,y;
-  if(side===0){x=rnd(0,W);y=-20;} else if(side===1){x=W+20;y=rnd(0,H);}
-  else if(side===2){x=rnd(0,W);y=H+20;} else {x=-20;y=rnd(0,H);}
-  const r=rnd(11,16), hp=Math.ceil(r/5);
-  hunters.push({x,y,vx:0,vy:0,r,hp,maxhp:hp,hue:rnd(300,330),wob:Math.random()*6.28,spawnT:0,hit:0});
+// enemy archetypes: distinct look, stats and behaviour
+const TYPES={
+  chaser:  {r:[12,16],  hp:2,  spd:1.00, hue:[300,330], shape:'diamond', kb:1.0},
+  swarmer: {r:[7,9],    hp:1,  spd:1.85, hue:[28,46],   shape:'tri',     kb:1.3},
+  tank:    {r:[22,27],  hp:10, spd:0.50, hue:[0,12],    shape:'hex',     kb:0.25},
+  shooter: {r:[12,15],  hp:3,  spd:0.72, hue:[258,284], shape:'pent',    kb:0.8, shoots:true, keep:210},
+  boss:    {r:[40,40],  hp:48, spd:0.40, hue:[315,315], shape:'star',    kb:0.05, shoots:true, keep:170, boss:true},
+};
+function edgePoint(){
+  const side=Math.floor(rnd(0,4));
+  if(side===0)return{x:rnd(0,W),y:-24};
+  if(side===1)return{x:W+24,y:rnd(0,H)};
+  if(side===2)return{x:rnd(0,W),y:H+24};
+  return{x:-24,y:rnd(0,H)};
+}
+function spawnHunter(type){
+  const c=TYPES[type], p=edgePoint();
+  const r=rnd(c.r[0],c.r[1]);
+  let hp=c.hp + (c.boss?0:Math.floor(t/1400)); // non-boss toughen slowly over time
+  hunters.push({x:p.x,y:p.y,vx:0,vy:0,r,hp,maxhp:hp,type,shape:c.shape,
+    hue:rnd(c.hue[0],c.hue[1]),spd:c.spd,kb:c.kb,shoots:!!c.shoots,keep:c.keep||0,boss:!!c.boss,
+    wob:Math.random()*6.28,spawnT:0,hit:0,shootT:rnd(40,90)});
+}
+function spawnBoss(){
+  const p=edgePoint(); const hp=48+Math.floor(t/900)*6;
+  hunters.push({x:p.x,y:p.y,vx:0,vy:0,r:40,hp,maxhp:hp,type:'boss',shape:'star',
+    hue:315,spd:0.40,kb:0.05,shoots:true,keep:170,boss:true,
+    wob:0,spawnT:0,hit:0,shootT:120});
+  shake=20; flash=0.7;
+  ripples.push({x:p.x,y:p.y,r:10,max:200,life:1,hue:315});
+}
+function chooseType(){
+  const pool=['chaser','chaser'];
+  if(t>500)  pool.push('swarmer');
+  if(t>1300) pool.push('tank');
+  if(t>2000) pool.push('shooter','chaser');
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function enemyShoot(h){
+  if(h.boss){ // radial burst
+    const n=12, off=h.shootT*0.1;
+    for(let i=0;i<n;i++){ const a=i/n*6.28+off;
+      ebullets.push({x:h.x,y:h.y,vx:Math.cos(a)*4.2,vy:Math.sin(a)*4.2,r:5,life:1,hue:320,trail:[]}); }
+    // plus an aimed triple
+  }
+  const dx=player.x-h.x, dy=player.y-h.y, base=Math.atan2(dy,dx);
+  const spread=h.boss?0.26:0.16, n=h.boss?3:1;
+  for(let i=0;i<n;i++){ const a=base+(n>1?(i/(n-1)-0.5)*spread:0);
+    ebullets.push({x:h.x,y:h.y,vx:Math.cos(a)*5,vy:Math.sin(a)*5,r:4.5,life:1,hue:h.boss?320:275,trail:[]}); }
+  for(let i=0;i<4;i++){const a=base+rnd(-.6,.6);
+    sparks.push({x:h.x,y:h.y,vx:Math.cos(a)*rnd(2,5),vy:Math.sin(a)*rnd(2,5),life:1,hue:h.hue});}
 }
 
 function nearestHunter(x,y){
@@ -170,31 +219,43 @@ function fire(){
 
 function explode(h){
   h.dead=true; kills++;
-  score+=10*combo;
-  shake=Math.min(shake+7,20); flash=Math.min(flash+0.35,0.9);
-  burst(h.x,h.y,h.hue,34,9);
-  burst(h.x,h.y,15,16,11);  // hot core
+  const mag=h.r/13;
+  score+=Math.round((h.boss?200:10)*combo);
+  shake=Math.min(shake+7*mag,24); flash=Math.min(flash+0.35*mag,1);
+  burst(h.x,h.y,h.hue,Math.round(34*mag),9*Math.sqrt(mag));
+  burst(h.x,h.y,15,Math.round(16*mag),11);  // hot core
   // chunky debris
-  for(let i=0;i<10;i++){ const a=Math.random()*6.28,s=rnd(2,8);
+  for(let i=0;i<10*mag;i++){ const a=Math.random()*6.28,s=rnd(2,8)*Math.sqrt(mag);
     debris.push({x:h.x,y:h.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:rnd(2,5),rot:Math.random()*6.28,vr:rnd(-.4,.4),hue:h.hue}); }
-  ripples.push({x:h.x,y:h.y,r:8,max:90,life:1,hue:h.hue});
-  ripples.push({x:h.x,y:h.y,r:4,max:50,life:1,hue:50});
+  ripples.push({x:h.x,y:h.y,r:8,max:90*mag,life:1,hue:h.hue});
+  ripples.push({x:h.x,y:h.y,r:4,max:50*mag,life:1,hue:50});
+  // bosses leave a generous payout of cells
+  if(h.boss){ for(let i=0;i<5;i++) spawnOrb(); }
   // splash damage chains to neighbours
+  const rad=48*mag;
   for(const o of hunters){ if(o===h||o.dead)continue;
-    if(Math.hypot(o.x-h.x,o.y-h.y)<48){ o.hp--; o.hit=6; o.vx+=(o.x-h.x)*0.05; o.vy+=(o.y-h.y)*0.05;
+    if(Math.hypot(o.x-h.x,o.y-h.y)<rad){ o.hp-=Math.ceil(mag); o.hit=6; o.vx+=(o.x-h.x)*0.05; o.vy+=(o.y-h.y)*0.05;
       if(o.hp<=0) explode(o); } }
 }
 
+function dashDir(){
+  // 1) explicit movement keys win
+  let kx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+  let ky=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
+  if(kx||ky){ const l=Math.hypot(kx,ky); return {x:kx/l,y:ky/l}; }
+  // 2) otherwise dash the way you're already moving
+  const sp=Math.hypot(player.vx,player.vy);
+  if(sp>0.5){ return {x:player.vx/sp,y:player.vy/sp}; }
+  // 3) standing still on touch: dash toward the finger; else dash where you aim
+  if(usingTouch){ const dx=mouse.x-player.x,dy=mouse.y-player.y,d=Math.hypot(dx,dy)||1; return {x:dx/d,y:dy/d}; }
+  return {x:Math.cos(player.aim),y:Math.sin(player.aim)};
+}
 function dash(){
   if(!running) return;
   if(dashCD>0) return;
-  let dx=mouse.x-player.x, dy=mouse.y-player.y;
-  let len=Math.hypot(dx,dy)||1;
-  // if using keys, dash in movement dir
-  let kx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
-  let ky=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
-  if(kx||ky){len=Math.hypot(kx,ky); dx=kx; dy=ky;}
-  player.vx+=dx/len*9; player.vy+=dy/len*9;
+  const dir=dashDir(), dx=dir.x, dy=dir.y, len=1;
+  // crisp, consistent impulse (set velocity, don't stack onto it)
+  player.vx=dx*16; player.vy=dy*16;
   player.dashT=12; player.inv=14; dashCD=42;
   shake=Math.min(shake+7,16); flash=Math.min(flash+0.3,0.8);
   for(let i=0;i<26;i++){
@@ -225,9 +286,10 @@ function update(){
   let ky=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
   if(kx||ky){
     const l=Math.hypot(kx,ky); ax=kx/l*0.9; ay=ky/l*0.9;
-  } else if(mouse.active){
+  } else if(usingTouch && mouse.down){
+    // touch: steer toward your finger
     const dx=mouse.x-player.x, dy=mouse.y-player.y, d=Math.hypot(dx,dy);
-    if(d>3){ ax=dx/d*Math.min(d*0.025,1.0); ay=dy/d*Math.min(d*0.025,1.0); }
+    if(d>6){ ax=dx/d*Math.min(d*0.03,0.95); ay=dy/d*Math.min(d*0.03,0.95); }
   }
   player.vx+=ax; player.vy+=ay;
   player.vx*=0.90; player.vy*=0.90;
@@ -260,7 +322,7 @@ function update(){
       if(h.dead||h.spawnT<8)continue;
       if(Math.hypot(h.x-b.x,h.y-b.y)<h.r+b.r){
         h.hp--; h.hit=6; b.life=0;
-        h.vx+=b.vx*0.12; h.vy+=b.vy*0.12;        // knockback
+        h.vx+=b.vx*0.12*h.kb; h.vy+=b.vy*0.12*h.kb;        // knockback (tanks resist)
         for(let i=0;i<7;i++){const a=Math.random()*6.28;sparks.push({x:b.x,y:b.y,vx:Math.cos(a)*rnd(2,6)+b.vx*0.1,vy:Math.sin(a)*rnd(2,6)+b.vy*0.1,life:1,hue:h.hue});}
         burst(b.x,b.y,h.hue,4,4);
         if(h.hp<=0) explode(h);
@@ -287,10 +349,17 @@ function update(){
   }
 
   // ---- difficulty / spawning ----
-  spawnT++;
-  const targetHunters = 1 + Math.floor(t/520);
-  hunterT++;
-  if(hunters.length<Math.min(targetHunters,9) && hunterT>90){ spawnHunter(); hunterT=0; }
+  spawnT++; hunterT++; bossT++;
+  const targetHunters = 2 + Math.floor(t/340);
+  const interval = Math.max(38, 90 - t*0.012);
+  if(hunters.length<Math.min(targetHunters,14) && hunterT>interval){
+    const ty=chooseType();
+    if(ty==='swarmer'){ const n=3+Math.floor(Math.random()*3); for(let i=0;i<n;i++) spawnHunter('swarmer'); }
+    else spawnHunter(ty);
+    hunterT=0;
+  }
+  // boss waves at rising score thresholds
+  if(score>=bossNext && !hunters.some(h=>h.boss)){ spawnBoss(); bossNext=Math.round(bossNext*1.8)+300; }
 
   // ---- hunters ----
   const speed=1.15+t*0.00035;
@@ -299,12 +368,16 @@ function update(){
     if(h.hit>0)h.hit--;
     h.wob+=0.1;
     const dx=player.x-h.x, dy=player.y-h.y, d=Math.hypot(dx,dy)||1;
-    // perpendicular wobble for organic feel
-    const px=-dy/d, py=dx/d, w=Math.sin(h.wob)*0.4;
-    h.vx+=(dx/d+px*w)*0.06; h.vy+=(dy/d+py*w)*0.06;
-    const sp=Math.hypot(h.vx,h.vy), max=speed + (h.hit>0?6:0); // allow knockback overspeed
+    // ranged types hold their distance; others charge
+    const approach = (h.keep && d < h.keep) ? -0.8 : 1;
+    const px=-dy/d, py=dx/d, w=Math.sin(h.wob)*(h.type==='swarmer'?0.7:0.4);
+    h.vx+=(dx/d*approach+px*w)*0.06; h.vy+=(dy/d*approach+py*w)*0.06;
+    const max=speed*h.spd + (h.hit>0?6:0); // allow knockback overspeed
+    const sp=Math.hypot(h.vx,h.vy);
     if(sp>max){h.vx=h.vx/sp*max;h.vy=h.vy/sp*max;}
     h.x+=h.vx; h.y+=h.vy;
+    // shooters & bosses fire
+    if(h.shoots && h.spawnT>=50){ h.shootT--; if(h.shootT<=0){ enemyShoot(h); h.shootT=h.boss?64:Math.round(rnd(80,130)); } }
     // bounce off walls a bit so knockback doesn't fling them away forever
     if(h.x<-30||h.x>W+30||h.y<-30||h.y>H+30){h.vx*=-.5;h.vy*=-.5;}
     // touching the player kills you (unless dashing/invulnerable)
@@ -313,11 +386,23 @@ function update(){
     }
     // ramming while dashing damages them
     if(player.dashT>0 && Math.hypot(h.x-player.x,h.y-player.y)<h.r+player.r+6){
-      h.hp-=2; h.hit=6; h.vx+=(h.x-player.x)*0.06; h.vy+=(h.y-player.y)*0.06;
+      h.hp-=2; h.hit=6; h.vx+=(h.x-player.x)*0.06*h.kb; h.vy+=(h.y-player.y)*0.06*h.kb;
       burst(h.x,h.y,190,6,6); if(h.hp<=0) explode(h);
     }
   }
   hunters=hunters.filter(h=>!h.dead);
+
+  // ---- enemy bullets ----
+  for(const b of ebullets){
+    b.trail.push({x:b.x,y:b.y}); if(b.trail.length>6)b.trail.shift();
+    b.x+=b.vx; b.y+=b.vy; b.life-=0.006;
+    if(b.x<-12||b.x>W+12||b.y<-12||b.y>H+12)b.life=0;
+    if(player.inv<=0 && Math.hypot(b.x-player.x,b.y-player.y)<b.r+player.r-2){ gameOver(); return; }
+    // nova dash vaporises incoming fire
+    if(player.dashT>0 && Math.hypot(b.x-player.x,b.y-player.y)<70){ b.life=0;
+      for(let i=0;i<3;i++)sparks.push({x:b.x,y:b.y,vx:rnd(-3,3),vy:rnd(-3,3),life:1,hue:190}); }
+  }
+  ebullets=ebullets.filter(b=>b.life>0);
 
   // ---- particles / sparks / ripples ----
   for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vx*=.94;p.vy*=.94;p.life-=0.022;}
@@ -332,6 +417,18 @@ function update(){
 }
 
 // ---- rendering ----
+function polyPath(R,n,rot){ ctx.beginPath();
+  for(let i=0;i<n;i++){ const a=rot+i/n*6.28, x=Math.cos(a)*R, y=Math.sin(a)*R; i?ctx.lineTo(x,y):ctx.moveTo(x,y);} ctx.closePath(); }
+function starPath(R,n,rot){ ctx.beginPath();
+  for(let i=0;i<n*2;i++){ const a=rot+i/(n*2)*6.28, rr=i%2?R*0.46:R, x=Math.cos(a)*rr, y=Math.sin(a)*rr; i?ctx.lineTo(x,y):ctx.moveTo(x,y);} ctx.closePath(); }
+function enemyPath(shape,R){
+  if(shape==='tri')  return polyPath(R,3,0);
+  if(shape==='pent') return polyPath(R,5,0);
+  if(shape==='hex')  return polyPath(R,6,0.2);
+  if(shape==='star'){ return starPath(R,8,0); }
+  // diamond (default)
+  ctx.beginPath(); ctx.moveTo(R*1.4,0); ctx.lineTo(0,R); ctx.lineTo(-R*0.7,0); ctx.lineTo(0,-R); ctx.closePath();
+}
 function drawGrid(){
   ctx.save();
   ctx.globalAlpha=0.25; ctx.strokeStyle='#1a2740'; ctx.lineWidth=1;
@@ -401,22 +498,47 @@ function render(){
   }
   ctx.shadowBlur=0;
 
+  // enemy bullets
+  for(const b of ebullets){
+    ctx.globalAlpha=0.5;
+    for(let i=0;i<b.trail.length;i++){const tp=b.trail[i],a=i/b.trail.length;
+      ctx.fillStyle=`hsla(${b.hue},100%,65%,${a*0.5})`;
+      ctx.beginPath();ctx.arc(tp.x,tp.y,b.r*a,0,6.28);ctx.fill();}
+    ctx.globalAlpha=1; ctx.shadowBlur=16; ctx.shadowColor=`hsl(${b.hue},100%,60%)`;
+    ctx.fillStyle=`hsl(${b.hue},100%,72%)`;
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.28);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.4,0,6.28);ctx.fill();
+  }
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+
   // hunters
   for(const h of hunters){
     const spawn=h.spawnT/60;
-    ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(Math.atan2(h.vy,h.vx));
+    // rounded shapes spin gently; pointed ones face their heading
+    const spin = (h.shape==='hex'||h.shape==='star') ? h.wob*0.3 : Math.atan2(h.vy,h.vx);
+    ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(spin);
     ctx.globalAlpha=spawn;
     const lit = h.hit>0 ? 100 : (spawn<1?40+spawn*20:62);
-    ctx.shadowBlur=h.hit>0?34:22; ctx.shadowColor=`hsl(${h.hue},100%,60%)`;
+    ctx.shadowBlur=h.hit>0?36:24; ctx.shadowColor=`hsl(${h.hue},100%,60%)`;
+    const R=h.r*spawn;
+    // boss/tank get an outer armour ring
+    if(h.shape==='hex'||h.shape==='star'){
+      ctx.strokeStyle=`hsl(${h.hue},100%,${h.hit>0?100:50}%)`; ctx.lineWidth=3;
+      enemyPath(h.shape,R+5); ctx.stroke();
+    }
     ctx.fillStyle = h.hit>0 ? '#ffffff' : `hsl(${h.hue},100%,${lit}%)`;
-    // spiky diamond
-    ctx.beginPath();
-    const R=h.r*(spawn);
-    ctx.moveTo(R*1.4,0); ctx.lineTo(0,R); ctx.lineTo(-R*0.7,0); ctx.lineTo(0,-R); ctx.closePath();
-    ctx.fill();
+    enemyPath(h.shape,R); ctx.fill();
+    // glowing eye
     ctx.shadowBlur=0; ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(R*0.3,0,2.2,0,6.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(R*0.25,0,h.boss?5:2.4,0,6.28); ctx.fill();
     ctx.restore();
+    // boss health bar
+    if(h.boss && spawn>=1){
+      const w=80, hh=6, x=h.x-w/2, y=h.y-h.r-16;
+      ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(x-1,y-1,w+2,hh+2);
+      ctx.fillStyle='#ff3df0'; ctx.shadowBlur=10; ctx.shadowColor='#ff3df0';
+      ctx.fillRect(x,y,w*Math.max(0,h.hp/h.maxhp),hh); ctx.shadowBlur=0;
+    }
   }
   ctx.globalAlpha=1;
 
