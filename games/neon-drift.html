@@ -61,12 +61,14 @@
 
 <div id="start" class="overlay">
   <h1>NEON<br>DRIFT</h1>
-  <div class="sub">DODGE · COLLECT · SURVIVE</div>
+  <div class="sub">SHOOT · DASH · OBLITERATE</div>
   <button class="btn" id="playBtn">PLAY</button>
   <div class="help">
-    <b>Move:</b> mouse / touch / WASD &nbsp;·&nbsp; <b>Dash:</b> click / space<br>
-    Grab the <span style="color:var(--good)">green cells</span> to score. Avoid the
-    <span style="color:var(--glow2)">pink hunters</span>. Chain pickups to build your combo.
+    <b>Move:</b> WASD &nbsp;·&nbsp; <b>Aim &amp; auto-fire:</b> mouse<br>
+    <b>Nova dash:</b> space / right-click &nbsp;·&nbsp; <b>Touch:</b> drag to move, tap to dash<br>
+    Blast the <span style="color:var(--glow2)">pink hunters</span> — they explode and chain.
+    Grab <span style="color:var(--good)">green cells</span> to crank your combo:
+    higher combo = <b>more bullets</b>. Dash detonates a shockwave. Don't get touched.
   </div>
 </div>
 
@@ -88,26 +90,34 @@ function resize(){
 addEventListener('resize',resize); resize();
 
 // ---- input ----
-const mouse={x:W/2,y:H/2,active:false};
+const mouse={x:W/2,y:H/2,active:false,down:false};
 const keys={};
+let usingTouch=false, touchOrigin=null;
 function toLocal(e){ const r=cv.getBoundingClientRect(); const t=e.touches?e.touches[0]:e;
   return {x:(t.clientX-r.left), y:(t.clientY-r.top)}; }
 cv.addEventListener('mousemove',e=>{const p=toLocal(e);mouse.x=p.x;mouse.y=p.y;mouse.active=true;});
+cv.addEventListener('mousedown',e=>{ if(e.button===2){dash();} else {mouse.down=true;} });
+cv.addEventListener('mouseup',()=>{mouse.down=false;});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+// touch: drag near where you touched = move, quick tap = dash
+cv.addEventListener('touchstart',e=>{e.preventDefault();usingTouch=true;const p=toLocal(e);touchOrigin={x:p.x,y:p.y,t:performance.now()};mouse.x=p.x;mouse.y=p.y;mouse.active=true;mouse.down=true;},{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();const p=toLocal(e);mouse.x=p.x;mouse.y=p.y;mouse.active=true;},{passive:false});
-cv.addEventListener('touchstart',e=>{e.preventDefault();const p=toLocal(e);mouse.x=p.x;mouse.y=p.y;mouse.active=true;dash();},{passive:false});
-cv.addEventListener('mousedown',()=>dash());
+cv.addEventListener('touchend',e=>{e.preventDefault();mouse.down=false;
+  if(touchOrigin){ const dt=performance.now()-touchOrigin.t, dd=Math.hypot(mouse.x-touchOrigin.x,mouse.y-touchOrigin.y);
+    if(dt<220 && dd<18) dash(); }
+  touchOrigin=null;},{passive:false});
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.key===' '){e.preventDefault();dash();}});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 
 // ---- state ----
-let player, orbs, hunters, particles, sparks, score, combo, comboTimer, best, running, t, spawnT, hunterT, shake, dashCD, ripples;
+let player, orbs, hunters, particles, sparks, bullets, debris, score, combo, comboTimer, best, running, t, spawnT, hunterT, shake, dashCD, fireT, ripples, flash, kills;
 best = +(localStorage.getItem('neondrift_best')||0);
 document.getElementById('best').textContent = best;
 
 function reset(){
-  player={x:W/2,y:H/2,vx:0,vy:0,r:11,trail:[],dashT:0,inv:0};
-  orbs=[]; hunters=[]; particles=[]; sparks=[]; ripples=[];
-  score=0; combo=1; comboTimer=0; t=0; spawnT=0; hunterT=0; shake=0; dashCD=0; running=true;
+  player={x:W/2,y:H/2,vx:0,vy:0,r:11,trail:[],dashT:0,inv:0,aim:0};
+  orbs=[]; hunters=[]; particles=[]; sparks=[]; bullets=[]; debris=[]; ripples=[];
+  score=0; combo=1; comboTimer=0; t=0; spawnT=0; hunterT=0; shake=0; dashCD=0; fireT=0; flash=0; kills=0; running=true;
   for(let i=0;i<4;i++) spawnOrb();
   spawnHunter();
 }
@@ -124,7 +134,55 @@ function spawnHunter(){
   const side=Math.floor(rnd(0,4)); let x,y;
   if(side===0){x=rnd(0,W);y=-20;} else if(side===1){x=W+20;y=rnd(0,H);}
   else if(side===2){x=rnd(0,W);y=H+20;} else {x=-20;y=rnd(0,H);}
-  hunters.push({x,y,vx:0,vy:0,r:rnd(11,15),hue:rnd(300,330),wob:Math.random()*6.28,spawnT:0});
+  const r=rnd(11,16), hp=Math.ceil(r/5);
+  hunters.push({x,y,vx:0,vy:0,r,hp,maxhp:hp,hue:rnd(300,330),wob:Math.random()*6.28,spawnT:0,hit:0});
+}
+
+function nearestHunter(x,y){
+  let best=null,bd=1e9;
+  for(const h of hunters){ if(h.spawnT<10)continue; const d=Math.hypot(h.x-x,h.y-y); if(d<bd){bd=d;best=h;} }
+  return best;
+}
+
+function fire(){
+  // aim point: mouse on desktop, nearest hunter on touch / fallback
+  let ax,ay;
+  if(usingTouch){ const tgt=nearestHunter(player.x,player.y);
+    if(!tgt) return; ax=tgt.x; ay=tgt.y; }
+  else { ax=mouse.x; ay=mouse.y; }
+  let dx=ax-player.x, dy=ay-player.y, d=Math.hypot(dx,dy)||1;
+  player.aim=Math.atan2(dy,dx);
+  const base=player.aim;
+  const pellets=1+Math.min(Math.floor(combo/8),4);    // combo = firepower
+  const spread=pellets>1?0.30:0;
+  for(let i=0;i<pellets;i++){
+    const a=base + (pellets>1 ? (i/(pellets-1)-0.5)*spread : 0) + rnd(-0.03,0.03);
+    const sp=12+rnd(-1,1);
+    bullets.push({x:player.x+Math.cos(a)*14,y:player.y+Math.sin(a)*14,
+      vx:Math.cos(a)*sp+player.vx*0.4, vy:Math.sin(a)*sp+player.vy*0.4, life:1, r:3.5, trail:[]});
+  }
+  // muzzle flash + recoil
+  for(let i=0;i<5;i++){const a=base+rnd(-0.5,0.5);
+    sparks.push({x:player.x+Math.cos(base)*14,y:player.y+Math.sin(base)*14,vx:Math.cos(a)*rnd(3,7),vy:Math.sin(a)*rnd(3,7),life:1,hue:55});}
+  player.vx-=Math.cos(base)*0.6; player.vy-=Math.sin(base)*0.6;
+  flash=Math.min(flash+0.12,0.5);
+}
+
+function explode(h){
+  h.dead=true; kills++;
+  score+=10*combo;
+  shake=Math.min(shake+7,20); flash=Math.min(flash+0.35,0.9);
+  burst(h.x,h.y,h.hue,34,9);
+  burst(h.x,h.y,15,16,11);  // hot core
+  // chunky debris
+  for(let i=0;i<10;i++){ const a=Math.random()*6.28,s=rnd(2,8);
+    debris.push({x:h.x,y:h.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:rnd(2,5),rot:Math.random()*6.28,vr:rnd(-.4,.4),hue:h.hue}); }
+  ripples.push({x:h.x,y:h.y,r:8,max:90,life:1,hue:h.hue});
+  ripples.push({x:h.x,y:h.y,r:4,max:50,life:1,hue:50});
+  // splash damage chains to neighbours
+  for(const o of hunters){ if(o===h||o.dead)continue;
+    if(Math.hypot(o.x-h.x,o.y-h.y)<48){ o.hp--; o.hit=6; o.vx+=(o.x-h.x)*0.05; o.vy+=(o.y-h.y)*0.05;
+      if(o.hp<=0) explode(o); } }
 }
 
 function dash(){
@@ -137,13 +195,19 @@ function dash(){
   let ky=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
   if(kx||ky){len=Math.hypot(kx,ky); dx=kx; dy=ky;}
   player.vx+=dx/len*9; player.vy+=dy/len*9;
-  player.dashT=12; player.inv=10; dashCD=42;
-  shake=Math.min(shake+5,14);
-  for(let i=0;i<18;i++){
-    const a=Math.random()*6.28, s=rnd(2,7);
+  player.dashT=12; player.inv=14; dashCD=42;
+  shake=Math.min(shake+7,16); flash=Math.min(flash+0.3,0.8);
+  for(let i=0;i<26;i++){
+    const a=Math.random()*6.28, s=rnd(2,9);
     sparks.push({x:player.x,y:player.y,vx:Math.cos(a)*s-dx/len*2,vy:Math.sin(a)*s-dy/len*2,life:1,hue:190});
   }
-  ripples.push({x:player.x,y:player.y,r:8,max:60,life:1,hue:190});
+  ripples.push({x:player.x,y:player.y,r:8,max:120,life:1,hue:190});
+  ripples.push({x:player.x,y:player.y,r:6,max:80,life:1,hue:50});
+  // NOVA: shockwave damages everything nearby
+  for(const h of hunters){ if(h.spawnT<10)continue;
+    const dd=Math.hypot(h.x-player.x,h.y-player.y);
+    if(dd<95){ h.hp-=2; h.hit=6; h.vx+=(h.x-player.x)/dd*8; h.vy+=(h.y-player.y)/dd*8;
+      burst(h.x,h.y,190,8,6); if(h.hp<=0) explode(h); } }
 }
 
 function burst(x,y,hue,n,sp){
@@ -182,6 +246,34 @@ function update(){
   // ---- combo decay ----
   if(comboTimer>0){ comboTimer--; if(comboTimer===0) combo=1; }
 
+  // ---- weapon (auto-fire) ----
+  if(fireT>0)fireT--;
+  const wantFire = usingTouch ? true : (mouse.active || mouse.down);
+  if(wantFire && fireT<=0){ fire(); fireT=7; }
+
+  // ---- bullets ----
+  for(const b of bullets){
+    b.trail.push({x:b.x,y:b.y}); if(b.trail.length>6)b.trail.shift();
+    b.x+=b.vx; b.y+=b.vy; b.life-=0.014;
+    if(b.x<0||b.x>W||b.y<0||b.y>H)b.life=0;
+    for(const h of hunters){
+      if(h.dead||h.spawnT<8)continue;
+      if(Math.hypot(h.x-b.x,h.y-b.y)<h.r+b.r){
+        h.hp--; h.hit=6; b.life=0;
+        h.vx+=b.vx*0.12; h.vy+=b.vy*0.12;        // knockback
+        for(let i=0;i<7;i++){const a=Math.random()*6.28;sparks.push({x:b.x,y:b.y,vx:Math.cos(a)*rnd(2,6)+b.vx*0.1,vy:Math.sin(a)*rnd(2,6)+b.vy*0.1,life:1,hue:h.hue});}
+        burst(b.x,b.y,h.hue,4,4);
+        if(h.hp<=0) explode(h);
+        break;
+      }
+    }
+  }
+  bullets=bullets.filter(b=>b.life>0);
+
+  // ---- debris ----
+  for(const d of debris){d.x+=d.vx;d.y+=d.vy;d.vx*=.93;d.vy*=.93;d.rot+=d.vr;d.life-=0.015;}
+  debris=debris.filter(d=>d.life>0);
+
   // ---- orbs ----
   for(let i=orbs.length-1;i>=0;i--){
     const o=orbs[i]; o.pulse+=0.12;
@@ -204,22 +296,25 @@ function update(){
   const speed=1.15+t*0.00035;
   for(const h of hunters){
     if(h.spawnT<60)h.spawnT++;
+    if(h.hit>0)h.hit--;
     h.wob+=0.1;
     const dx=player.x-h.x, dy=player.y-h.y, d=Math.hypot(dx,dy)||1;
     // perpendicular wobble for organic feel
     const px=-dy/d, py=dx/d, w=Math.sin(h.wob)*0.4;
     h.vx+=(dx/d+px*w)*0.06; h.vy+=(dy/d+py*w)*0.06;
-    const sp=Math.hypot(h.vx,h.vy), max=speed;
+    const sp=Math.hypot(h.vx,h.vy), max=speed + (h.hit>0?6:0); // allow knockback overspeed
     if(sp>max){h.vx=h.vx/sp*max;h.vy=h.vy/sp*max;}
     h.x+=h.vx; h.y+=h.vy;
-    // collision
+    // bounce off walls a bit so knockback doesn't fling them away forever
+    if(h.x<-30||h.x>W+30||h.y<-30||h.y>H+30){h.vx*=-.5;h.vy*=-.5;}
+    // touching the player kills you (unless dashing/invulnerable)
     if(h.spawnT>=60 && player.inv<=0 && Math.hypot(h.x-player.x,h.y-player.y)<h.r+player.r-2){
       gameOver(); return;
     }
-    // dash destroys hunters
+    // ramming while dashing damages them
     if(player.dashT>0 && Math.hypot(h.x-player.x,h.y-player.y)<h.r+player.r+6){
-      h.dead=true; score+=5*combo; burst(h.x,h.y,h.hue,26,7);
-      ripples.push({x:h.x,y:h.y,r:8,max:70,life:1,hue:h.hue}); shake=Math.min(shake+6,16);
+      h.hp-=2; h.hit=6; h.vx+=(h.x-player.x)*0.06; h.vy+=(h.y-player.y)*0.06;
+      burst(h.x,h.y,190,6,6); if(h.hp<=0) explode(h);
     }
   }
   hunters=hunters.filter(h=>!h.dead);
@@ -233,6 +328,7 @@ function update(){
   ripples=ripples.filter(r=>r.life>0);
 
   if(shake>0)shake*=0.86;
+  if(flash>0)flash*=0.84;
 }
 
 // ---- rendering ----
@@ -283,13 +379,36 @@ function render(){
   }
   ctx.globalAlpha=1; ctx.shadowBlur=0;
 
+  // debris chunks
+  for(const d of debris){
+    ctx.save(); ctx.translate(d.x,d.y); ctx.rotate(d.rot);
+    ctx.globalAlpha=d.life; ctx.shadowBlur=12; ctx.shadowColor=`hsl(${d.hue},100%,60%)`;
+    ctx.fillStyle=`hsl(${d.hue},100%,65%)`;
+    ctx.fillRect(-d.r,-d.r,d.r*2,d.r*2);
+    ctx.restore();
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+
+  // bullets
+  for(const b of bullets){
+    ctx.globalAlpha=0.5;
+    for(let i=0;i<b.trail.length;i++){const tp=b.trail[i],a=i/b.trail.length;
+      ctx.fillStyle=`rgba(255,240,120,${a*0.5})`;
+      ctx.beginPath();ctx.arc(tp.x,tp.y,b.r*a,0,6.28);ctx.fill();}
+    ctx.globalAlpha=1; ctx.shadowBlur=14; ctx.shadowColor='#fff7a8';
+    ctx.fillStyle='#fffbe0';
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.28);ctx.fill();
+  }
+  ctx.shadowBlur=0;
+
   // hunters
   for(const h of hunters){
     const spawn=h.spawnT/60;
     ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(Math.atan2(h.vy,h.vx));
     ctx.globalAlpha=spawn;
-    ctx.shadowBlur=22; ctx.shadowColor=`hsl(${h.hue},100%,60%)`;
-    ctx.fillStyle=`hsl(${h.hue},100%,${spawn<1?40+spawn*20:62}%)`;
+    const lit = h.hit>0 ? 100 : (spawn<1?40+spawn*20:62);
+    ctx.shadowBlur=h.hit>0?34:22; ctx.shadowColor=`hsl(${h.hue},100%,60%)`;
+    ctx.fillStyle = h.hit>0 ? '#ffffff' : `hsl(${h.hue},100%,${lit}%)`;
     // spiky diamond
     ctx.beginPath();
     const R=h.r*(spawn);
@@ -316,6 +435,16 @@ function render(){
   }
   ctx.globalAlpha=1;
 
+  // player cannon
+  ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(player.aim);
+  ctx.shadowBlur=10; ctx.shadowColor='#9bf6ff';
+  ctx.fillStyle='#bff7ff';
+  ctx.fillRect(4,-3,16,6);
+  // muzzle glow when firing
+  if(fireT>4){ ctx.shadowBlur=22; ctx.shadowColor='#fff7a8'; ctx.fillStyle='#fffbe0';
+    ctx.beginPath(); ctx.arc(20,0,5,0,6.28); ctx.fill(); }
+  ctx.restore(); ctx.shadowBlur=0;
+
   // player
   const flick = player.inv>0 ? (Math.floor(t/2)%2?0.5:1) : 1;
   ctx.globalAlpha=flick;
@@ -337,6 +466,9 @@ function render(){
   ctx.globalAlpha=1; ctx.shadowBlur=0;
 
   ctx.restore();
+
+  // full-screen impact flash
+  if(flash>0.02){ ctx.fillStyle=`rgba(180,240,255,${flash*0.35})`; ctx.fillRect(0,0,W,H); }
 
   // combo flash on hud handled via DOM
   document.getElementById('score').textContent=score;
